@@ -1,0 +1,15 @@
+.loginWrap {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+.loginBox {
+  border: 1px solid lightgray;
+  padding: 10%;
+  width: 50%;
+}
+
+.loginInput {
+  margin-top: 10px;
+}

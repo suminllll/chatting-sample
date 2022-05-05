@@ -1,0 +1,14 @@
+.buttonWrap {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  border: 1px solid lightgray;
+  padding: 10%;
+}
+
+.roomButton {
+  height: 60px;
+  width: 200px;
+  margin-right: 50px;
+  font-size: 20px;
+}
