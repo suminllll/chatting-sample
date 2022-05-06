@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import Customer from "../../../component/Customer";
+import Customer from "../../../src/component/Customer";
 import { httpRequest } from "../../../src/commons/httpRequest";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import { userInfo } from "../../../src/store/accounts";
@@ -12,6 +12,15 @@ const chatRoom = () => {
   const [contents, setContents] = useState([]);
   const [info, setInfo] = useRecoilState(userInfo);
 
+  useEffect(() => {
+    const type = info.roomTitle.split(" ")[0];
+    setInfo({
+      ...info,
+      roomType: type,
+    });
+    console.log("room", info);
+  }, []);
+
   const handleContent = (e) => {
     setName(e.target.value);
   };
@@ -19,9 +28,15 @@ const chatRoom = () => {
   const handleSend = (e) => {
     e.preventDefault();
     if (e.key === "Enter") {
-      //보내다 emit
-      socket.emit("rooms", { post: name });
-      setName("");
+      if (name.length > 0) {
+        //보내다 emit
+        socket.emit("rooms", { post: name });
+
+        setName("");
+        sendMessages();
+      } else {
+        alert("채팅 내용을 입력해주세요.");
+      }
     }
   };
 
@@ -33,26 +48,36 @@ const chatRoom = () => {
     console.log("err", error);
   });
 
-  useEffect(() => {
-    new Promise(async (res, req) => {
+  console.log("name", name);
+  console.log("contents", contents);
+  const sendMessages = () => {
+    return new Promise(async (res, req) => {
       const url = `/rooms/chat`;
       const data = {
         member_no: info.memberNo,
         room_no: info.roomNo,
-        chat: contents.post,
+        chat: name,
       };
       const result = await httpRequest(`POST`, url, data);
 
       if (result.success) {
-        console.log("success");
+        setInfo({
+          ...info,
+          chat: contents,
+        });
       }
     });
-  }, []);
+  };
+
+  //   useEffect(() => {
+  //     console.log(info);
+  //   }, [info]);
 
   return (
     <>
       <div className="chatForm">
         <div className="chatWindow">
+          {/* {type === {type} ? (<`${type}` contents={contents}/>) } */}
           <Customer contents={contents} />
         </div>
         <div className="chatInputWrap">
