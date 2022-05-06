@@ -1,8 +1,7 @@
 .chatForm {
-  border: 1px solid lightgray;
+  /* border: 1px solid lightgray; */
   height: 90vh;
   width: 100vw;
-  /* display: flex; */
 }
 
 .chatInputWrap {
@@ -26,7 +25,6 @@ input::placeholder {
 }
 
 .chatWindow {
-  border: 1px solid lightgray;
   height: 100%;
 }
 

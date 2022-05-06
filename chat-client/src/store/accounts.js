@@ -7,6 +7,5 @@ export const userInfo = atom({
     memberNo: "",
     roomNo: "",
     roomTitle: "",
-    joined: "",
   },
 });
