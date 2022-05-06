@@ -17,12 +17,20 @@ const room = () => {
       const result = await httpRequest("GET", url);
 
       if (result.success) {
-        return setData(result.data);
+        setData(result.data);
       }
     });
   }, []);
 
-  //버튼 누르면 해당 채팅방으로 넘어가기
+  //버튼 누르면 해당 채팅방 정보가 info에 담기고 해당 채팅방으로 넘어간다
+  const handleRoom = (data) => {
+    setInfo({
+      ...info,
+      roomNo: data.room_no,
+      roomTitle: data.room_title,
+    });
+    route.replace("/room/chatRoom");
+  };
 
   return (
     <>
@@ -30,7 +38,9 @@ const room = () => {
         {data.map((data) => {
           return (
             <div key={data.room_no}>
-              <button className="roomButton">{data.room_title}</button>
+              <button className="roomButton" onClick={() => handleRoom(data)}>
+                {data.room_title}
+              </button>
             </div>
           );
         })}

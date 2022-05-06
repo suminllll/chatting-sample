@@ -1,8 +1,7 @@
 .chatForm {
-  border: 1px solid lightgray;
+  /* border: 1px solid lightgray; */
   height: 90vh;
   width: 100vw;
-  /* display: flex; */
 }
 
 .chatInputWrap {
@@ -26,7 +25,6 @@ input::placeholder {
 }
 
 .chatWindow {
-  border: 1px solid lightgray;
   height: 100%;
 }
 
@@ -49,7 +47,11 @@ li {
 }
 
 .chatList {
+  height: 35px;
+  padding: 10px;
+  border-radius: 5px;
   background-color: lightgray;
+  color: #336600;
 }
 
 .time {
@@ -60,7 +62,7 @@ li {
 .imgBox {
   width: 30px;
   height: 30px;
-  margin-top: 20px;
+  margin-top: 30px;
 }
 
 img {
