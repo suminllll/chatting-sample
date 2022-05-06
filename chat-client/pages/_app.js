@@ -3,7 +3,7 @@ import { RecoilRoot } from "recoil";
 import "../styles/globals.css";
 import "../styles/login.css";
 import "../styles/room.css";
-import "../styles/chat.css";
+import "../styles/chatRoom.css";
 
 function MyApp({ Component, pageProps }) {
   return (
