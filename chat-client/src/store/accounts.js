@@ -5,7 +5,9 @@ export const userInfo = atom({
   default: {
     nick: "",
     memberNo: "",
+    roomType: "",
     roomNo: "",
     roomTitle: "",
+    chat: "",
   },
 });
