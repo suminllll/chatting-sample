@@ -22,6 +22,7 @@ router.get("/:id", async function (req, res, next) {
 router.post("/chat", async function (req, res, next) {
   const reqData = {
     member_no: req.body.member_no,
+    room_type: req.body.room_type,
     room_no: req.body.room_no,
     chat: req.body.chat,
   };
@@ -30,4 +31,16 @@ router.post("/chat", async function (req, res, next) {
 
   return res.status(resData.http_status).send(resData);
 });
+
+router.get("/chat/:room_type/:nick", async function (req, res, next) {
+  const reqData = {
+    room_type: req.params.room_type,
+    nick: req.params.nick,
+  };
+
+  const resData = await roomCtr.getChat(reqData);
+
+  return res.status(resData.http_status).send(resData);
+});
+
 module.exports = router;

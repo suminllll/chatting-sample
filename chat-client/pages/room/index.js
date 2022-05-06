@@ -9,7 +9,7 @@ import axios from "axios";
 const room = () => {
   const route = useRouter();
   const [info, setInfo] = useRecoilState(userInfo);
-  let [data, setData] = useState([]);
+  const [data, setData] = useState([]);
 
   useEffect(() => {
     console.log("choice", info);
