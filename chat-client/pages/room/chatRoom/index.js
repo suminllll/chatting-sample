@@ -12,14 +12,16 @@ const chatRoom = () => {
   const [contents, setContents] = useState([]);
   const [info, setInfo] = useRecoilState(userInfo);
 
+  //채팅방 앞글자만 잘라서 type에 할당해줌
+  //type마다 ui가 다를예정
   useEffect(() => {
     const type = info.roomTitle.split(" ")[0];
     setInfo({
       ...info,
       roomType: type,
     });
-    console.log("room", info);
   }, []);
+  console.log("room", info);
 
   const handleContent = (e) => {
     setName(e.target.value);
@@ -31,7 +33,6 @@ const chatRoom = () => {
       if (name.length > 0) {
         //보내다 emit
         socket.emit("rooms", { post: name });
-
         setName("");
         sendMessages();
       } else {
@@ -44,17 +45,12 @@ const chatRoom = () => {
     setContents([...contents, data]);
   });
 
-  socket.on("connect_error", (error) => {
-    console.log("err", error);
-  });
-
-  console.log("name", name);
-  console.log("contents", contents);
   const sendMessages = () => {
     return new Promise(async (res, req) => {
       const url = `/rooms/chat`;
       const data = {
         member_no: info.memberNo,
+        room_type: info.roomType,
         room_no: info.roomNo,
         chat: name,
       };
@@ -69,9 +65,22 @@ const chatRoom = () => {
     });
   };
 
-  //   useEffect(() => {
-  //     console.log(info);
-  //   }, [info]);
+  socket.on("connect_error", (error) => {
+    console.log("err", error);
+  });
+
+  //나갔다 들어왔을때 전에 내용 불러옴
+  useEffect(() => {
+    new Promise(async (res, rej) => {
+      console.log(`/rooms/chat/${info.roomType}/${info.nick}`);
+      const url = `/rooms/chat/${info.roomType}/${info.nick}`;
+      const result = await httpRequest("GET", url);
+
+      if (result.success) {
+        console.log("result", result);
+      }
+    });
+  }, []);
 
   return (
     <>

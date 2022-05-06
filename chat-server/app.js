@@ -103,7 +103,7 @@ const memberRoom = [];
 io.on("connection", (socket) => {
   //연결시
   const dateTime = new Date();
-  console.log(`[console][${dateTime}] connection`);
+  //console.log(`[console][${dateTime}] connection`);
   // console.log(`[console] connected user socket id:${socket.id}`);
   // console.log(`[console] connected user ip: ${socket.request.connection.remoteAddress}`);
 
@@ -111,7 +111,7 @@ io.on("connection", (socket) => {
   //console.log("req", req);
 
   socket.on("rooms", function (data) {
-    console.log("[console] data", data);
+    //console.log("[console] data", data);
 
     io.emit("data", data);
   });

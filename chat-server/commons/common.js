@@ -1,5 +1,5 @@
 const moment = require("moment");
-const customerCtr = require("../controller/customer");
+const roomCtr = require("../controller/login");
 
 const common = {};
 

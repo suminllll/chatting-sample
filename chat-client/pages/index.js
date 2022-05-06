@@ -38,7 +38,6 @@ const main = () => {
                 ...info,
                 memberNo: result.data,
               });
-            } else {
               route.replace("/room");
             }
           });
