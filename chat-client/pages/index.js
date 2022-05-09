@@ -20,8 +20,16 @@ const main = () => {
     if (e.key === "Enter") {
       //해당 닉네임이 있는지 조회후 없으면 db에 추가한다
       return new Promise(async (res, rej) => {
-        const url = `/login/${info.nick}`;
-        const result = await httpRequest("GET", url);
+        const result = await httpRequest("GET", `/login/info`, {
+          Cookie: cookie,
+        });
+        if (result.success) {
+          console.log("result", result);
+        }
+        // });
+
+        // return new Promise(async (res, rej) => {
+        //   const result = await httpRequest("GET", url);
         console.log("result1", result);
 
         if (result.success && result.data.length < 1) {
@@ -38,18 +46,19 @@ const main = () => {
                 ...info,
                 memberNo: result.data,
               });
-              route.replace("/room");
+              // route.replace("/room");
             }
           });
         }
-        route.replace("/room");
+        // route.replace("/room");
       });
     }
   };
 
-  useEffect(() => {
-    console.log(info);
-  }, [info]);
+  // useEffect(() => {
+  //   console.log(info);
+  // }, [info]);
+
   return (
     <>
       <div className="loginWrap">

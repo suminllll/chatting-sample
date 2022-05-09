@@ -1,32 +1,92 @@
 const jwtSecret = process.env.JWT_SECRET;
 const jwt = require("jsonwebtoken");
-const loginCtr = require("../controller/login");
+const auth = require("./auth");
+
 //파라미터 순서(토큰에 넣을 데이터, secret_key, option, callback_function)
-function generateToken(payload) {
-  return new Promise((resolve, reject) => {
-    jwt.sign(payload, jwtSecret),
-      {
-        //토큰은 만들어지고나서 7일동안 유효
-        expiresIn: "7d",
-      },
-      (error, token) => {
-        if (error) reject(error);
-        resolve(token);
-      };
-  });
-}
-exports.generateToken = generateToken;
-//Account.methods.generateToken = function() {
-const registerToken = function () {
-  //jwt에 담을 내용
-  const payload = {
-    _id: this._id,
-    profile: this.profile,
-  };
-  return generateToken(payload, "account");
+const jwtConstants = {
+  jwtKey: "SAMPLE_KEY",
+  expiresIn: "7 days",
+  expires: () => {
+    const days = parseInt(jwtConstants.expiresIn.split(" ")[0]);
+    return new Date(Date.now() + 1000 * 60 * 60 * 24 * days);
+  },
 };
 
-module.exports = { registerToken };
+const cookieSecret = "secret";
+
+function generateToken(req, res, next) {
+  console.log("tokenReq", req);
+
+  const token = jwt.sign(req, jwtConstants.jwtKey, {
+    expiresIn: jwtConstants.expiresIn,
+  });
+
+  res.cookie("accessToken", token, {
+    signed: true,
+    secret: cookieSecret,
+    expires: jwtConstants.expires(),
+  });
+
+  next();
+  // (error, token) => {
+  //   if (error) reject(error);
+  //   resolve(token);
+  // };
+}
+
+module.exports = generateToken;
+
+//token descript
+async function jwtDeserializer(req, res, next) {
+  const accessToken = req.signedCookies.accessToken;
+  console.log("accessToken", accessToken);
+
+  if (!accessToken) {
+    return res.status(401).send({
+      result: false,
+      message: "Access token is not provided",
+      data: [],
+    });
+  }
+
+  const decoded = jwt.verify(accessToken, jwtConstants.jwtKey);
+
+  const isExpired = decoded.exp < Date.now() / 1000;
+
+  if (isExpired) {
+    return res.status(401).send({
+      result: false,
+      message: "Access token is expired",
+      data: [],
+    });
+  }
+
+  // const infoResult = await auth.info({
+  //   nickname: decoded.nickname,
+  // });
+
+  // const user = infoResult.data[0];
+
+  // req.user = user;
+  res.locals.message = "Access token is valid";
+
+  next();
+}
+
+module.exports = jwtDeserializer;
+
+// //Account.methods.generateToken = function() {
+// const registerToken = function () {
+//   //jwt에 담을 내용
+//   const payload = {
+//     _id: this._id,
+//     profile: this.profile,
+//   };
+//   return generateToken(payload, "account");
+// };
+
+// module.exports = { registerToken };
+
 // //token 유효성검사
 // const verifyToken = token => {
 //     try {
