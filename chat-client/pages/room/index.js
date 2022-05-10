@@ -2,14 +2,22 @@ import { useEffect, useState } from "react";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import { userInfo } from "../../src/store/accounts";
 import { httpRequest } from "../../src/commons/httpRequest";
-import { getCookie, removeCookie } from "../../src/commons/cookie";
 import { useRouter } from "next/router";
-import axios from "axios";
+import useGuard from "../../src/hooks/useGuard";
 
 const room = () => {
   const route = useRouter();
   const [info, setInfo] = useRecoilState(userInfo);
   const [data, setData] = useState([]);
+  const { user } = useGuard();
+  const [room, setRoom] = useState([]);
+
+  // useEffect(() => {
+  //   axios.get(`/api/room/`).then((res) => {
+  //     setRooms(res.data);
+  //     console.log(res.data);
+  //   });
+  // }, []);
 
   useEffect(() => {
     console.log("choice", info);
@@ -30,11 +38,14 @@ const room = () => {
       roomNo: data.room_no,
       roomTitle: data.room_title,
     });
-    route.replace("/room/chatRoom");
+    route.replace(`/room/${data.room_no}`);
   };
 
   return (
     <>
+      <div>
+        <h3>{`반갑습니다 ${user.nick}님.`}</h3>
+      </div>
       <div className="buttonWrap">
         {data.map((data) => {
           return (
@@ -51,3 +62,17 @@ const room = () => {
 };
 
 export default room;
+
+// export async function getServerSideProps(context) {
+//   console.log(context.resolvedUrl);
+//   const guardResult = await authenticationGuard(context);
+//   if (guardResult.type === "REDIRECT") {
+//     return { redirect: guardResult.redirect };
+//   }
+
+//   return {
+//     props: {
+//       user: guardResult.response.data.data[0],
+//     },
+//   };
+// }

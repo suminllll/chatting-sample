@@ -23,7 +23,8 @@ global._common = require(__base + "commons/common");
 global._res = require(__base + "commons/response");
 global._db = require(__base + "commons/db");
 global._constants = require(__base + "commons/constants");
-const _jwt = require(__base + "commons/jwt");
+//const jwt = require(__base + "commons/jwt");
+//const _jwt = require(__base + "commons/jwt");
 
 // const privateKey = fs.readFileSync(process.env.PRIVATE_KEY, "utf8");
 // const certificate = fs.readFileSync(process.env.CERTIFICATE, "utf8");
@@ -45,7 +46,7 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser(process.env.SECURITY_COOKIE));
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cors({ origin: true, credentials: true }));
@@ -80,7 +81,6 @@ const sessionMiddleware = session({
 });
 //console.log(`[console] sessionMiddleware1: ${sessionMiddleware}`)
 
-// async function dbConnect() {
 //채팅관련
 const io = require("socket.io")(server, {
   cors: {
@@ -97,13 +97,13 @@ io.use(function (socket, next) {
 
 app.use(sessionMiddleware);
 
-const memberRoom = [];
-
+// const memberRoom = [];
 //받음
 io.on("connection", (socket) => {
   //연결시
   const dateTime = new Date();
   //console.log(`[console][${dateTime}] connection`);
+  //디비 insert 로직
   // console.log(`[console] connected user socket id:${socket.id}`);
   // console.log(`[console] connected user ip: ${socket.request.connection.remoteAddress}`);
 
@@ -187,7 +187,7 @@ function readdirAsync(path) {
 }
 
 async function main() {
-  // global.jwt = _jwt(process.env.JWT_SECRET);
+  //global.jwt = jwt(process.env.JWT_SECRET);
 
   //데이터베이스 연결 생성
   global.pool = mysql.createPool({
@@ -218,6 +218,8 @@ async function main() {
       app.use("/", router);
     }
   }
+  // const loginRoutes = require("./routes/login");
+  // app.use("/login", loginRoutes);
   // --- 자동 라우터 등록 ---.
 
   // 404 (API 를 찾을 수 없는 경우)

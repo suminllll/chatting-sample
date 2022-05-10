@@ -32,7 +32,7 @@ router.post("/chat", async function (req, res, next) {
   return res.status(resData.http_status).send(resData);
 });
 
-router.get("/chat/:room_type/:nick", async function (req, res, next) {
+router.get("/chat/:room_type/", async function (req, res, next) {
   const reqData = {
     room_type: req.params.room_type,
     nick: req.params.nick,

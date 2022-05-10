@@ -33,10 +33,12 @@ database.qry = async (sql, reqData) => {
   const connection = await _db.getConnect();
   try {
     const result = await connection.query(sql, reqData);
+
+    console.log(result);
     const rows = result[0];
 
     connection.release();
-    console.log("rows->", rows);
+
     return { success: true, result: rows };
   } catch (err) {
     console.log("database.query - \n\r", err);

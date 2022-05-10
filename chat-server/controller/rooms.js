@@ -10,6 +10,7 @@ roomCtr.getAllInfo = async (_reqData) => {
   return _res.okLists(outputSql.result);
 };
 
+//버튼에 title을 뿌려줌
 roomCtr.getRoom = async (_reqData) => {
   let inputSql, outputSql;
   inputSql = `SELECT room_title FROM room WHERE room_no = :room_no`;

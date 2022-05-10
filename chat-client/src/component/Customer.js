@@ -1,9 +1,11 @@
 import { useRecoilState, useResetRecoilState } from "recoil";
 import { userInfo } from "../../src/store/accounts";
 import { httpRequest } from "../../src/commons/httpRequest";
+import useGuard from "../../src/hooks/useGuard";
 
-const Customer = ({ contents }) => {
+const Customer = ({ message }) => {
   const [info, setInfo] = useRecoilState(userInfo);
+  const { user } = useGuard();
 
   //현재시간 구하기
   let date = new Date();
@@ -16,20 +18,18 @@ const Customer = ({ contents }) => {
   var time = `${hours}:${minutes} ${ampm}`;
 
   //채팅 불러오기
-  //console.log("chat", info);
-  // useEffect(() => {}, []);
 
   return (
     <>
       <div>
-        {contents.map((data, index) => {
+        {message.map((data, index) => {
           return (
             <div className="contentWrap" key={index}>
               <div className="imgBox">
                 <img alt="profileImg" src="/img/profile.jpeg" />
               </div>
               <ul className="chatWrap">
-                <li className="profileName">{info.nick}</li>
+                <li className="profileName">{user.nick}</li>
                 <li className="chatList">{data.post}</li>
                 <li className="time">{time}</li>
               </ul>
