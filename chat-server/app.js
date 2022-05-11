@@ -9,10 +9,8 @@ const MySQLStore = require("express-mysql-session")(session);
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const router = express.Router();
-//const https = require("https");
 const app = express();
 const server = require("http").createServer(app);
-const chatSocket = require("./routes/chat");
 
 //env를 사용한다는 의미 dotenv
 require("dotenv").config();
@@ -26,15 +24,6 @@ global._db = require(__base + "commons/db");
 global._constants = require(__base + "commons/constants");
 //const jwt = require(__base + "commons/jwt");
 //const _jwt = require(__base + "commons/jwt");
-
-// const privateKey = fs.readFileSync(process.env.PRIVATE_KEY, "utf8");
-// const certificate = fs.readFileSync(process.env.CERTIFICATE, "utf8");
-// const ca = fs.readFileSync(process.env.CHAIN, "utf8");
-// const credentials = {
-//   key: privateKey,
-//   cert: certificate,
-//   ca: ca,
-// };
 
 //const httpsServer = https.createServer(app)
 
@@ -103,7 +92,7 @@ app.use(sessionMiddleware);
 io.on("connection", (socket) => {
   //연결시
   const dateTime = new Date();
-  console.log(`[console][${dateTime}] connection`);
+  //console.log(`[console][${dateTime}] connection`);
   //디비 insert 로직
   // console.log(`[console] connected user socket id:${socket.id}`);
   // console.log(`[console] connected user ip: ${socket.request.connection.remoteAddress}`);
@@ -111,14 +100,34 @@ io.on("connection", (socket) => {
   const req = socket.request;
   //console.log("req", req);
 
-  socket.on("rooms", function (data) {
-    //console.log("[console] data", data);
-
-    io.emit("data", data);
+  //채팅방 입장시 실행되는 이벤트
+  socket.on("/rooms/join", function (data) {
+    console.log("data", data);
+    const { roomNo, memberNo } = data;
+    _db
+      .qry(
+        "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
+        data
+      )
+      .then(() => {
+        //그 방에 집어넣는다
+        socket.join(roomNo);
+        //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
+        io.in(roomNo).emit("/rooms/join", data);
+      });
   });
-  chatSocket(io, socket);
-  //종료시
-  //에러시
+
+  //채팅
+  socket.on("/rooms/message", function (data) {
+    console.log("message", data);
+    const { roomNo, memberNo, chat, nick } = data;
+    io.in(roomNo).emit("/rooms/message", data);
+  });
+
+  //채팅방 나가기
+  socket.on("/rooms/out", function (data) {
+    console.log("rooms/out", data);
+  });
 });
 
 //-- 채팅관련 끝

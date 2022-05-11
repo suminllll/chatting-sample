@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { io } from "socket.io-client";
 import Customer from "../../src/component/Customer";
 import { httpRequest } from "../../src/commons/httpRequest";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import { userInfo } from "../../src/store/accounts";
 import useGuard from "../../src/hooks/useGuard";
-import axios from "axios";
-
-const socket = io("http://localhost:8000", { transports: ["websocket"] });
 
 const chatRoom = (props) => {
   const [message, setMessage] = useState("");
@@ -17,17 +14,44 @@ const chatRoom = (props) => {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const [count, setCount] = useState(0);
+  const socket = useMemo(
+    () => io("http://localhost:8000", { transports: ["websocket"] }),
+    []
+  );
 
-  // useEffect(() => {
-  //   socket.emit(
-  //     "/chat/v1/room/join",
-  //     JSON.stringify({
-  //       roomNo: props.roomNo,
-  //       memberNo: user.memberNo,
-  //     })
-  //   );
-  // }, []);
+  console.log("user", user);
+  useEffect(() => {
+    if (user) {
+      //채팅방 입장시 실행되는 이벤트
+      socket.emit("/rooms/join", {
+        roomNo: props.roomNo,
+        memberNo: user.member_no,
+      });
+
+      //채팅
+      socket.on("/rooms/join", (data) => {
+        setMessages((prev) => [
+          ...prev,
+          { chat: data.memberNo + "들어왔습니다" },
+        ]);
+      });
+
+      socket.on("/rooms/message", (data) => {
+        console.log("eee");
+      });
+
+      socket.on("/rooms/out", (data) => {
+        console.log("dd");
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    socket.on("data", (data) => {
+      setMessages([...messages, data]);
+    });
+  }, []);
+
   useEffect(() => {
     new Promise(async (res, rej) => {
       const url = `/rooms`;
@@ -65,11 +89,6 @@ const chatRoom = (props) => {
     e.preventDefault();
     setMessage(e.target.value);
   };
-
-  //useEffect안에 넣어놓기
-  socket.on("data", (data) => {
-    setMessages([...messages, data]);
-  });
 
   //send가 실행되고 채팅 내용이 db로 추가됨
   const handleSend = () => {
@@ -117,7 +136,7 @@ const chatRoom = (props) => {
       <div className="chatForm">
         <div className="joinWrap">
           <h4 className="roomTitle">{room}</h4>
-          <h4>{`Joined ${users} Members`}</h4>
+          <h4>{`Joined ${users.length} Members`}</h4>
           {users.map((user) => (
             <div className="joinUser" key={user.member_no}>
               <p>* {user.nick}</p>

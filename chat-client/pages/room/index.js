@@ -30,6 +30,10 @@ const room = () => {
     });
   }, []);
 
+  const handleLogout = async () => {
+    await httpRequest("POST", `/login/logout`);
+    route.replace("/");
+  };
   //버튼 누르면 해당 채팅방 정보가 info에 담기고 해당 채팅방으로 넘어간다
   const handleRoom = (data) => {
     setInfo({
@@ -39,11 +43,11 @@ const room = () => {
     });
     route.replace(`/room/${data.room_no}`);
   };
-
+  console.log("user", user);
   return (
     <>
       <div>
-        <h3>{`반갑습니다 ${user.nick}님.`}</h3>
+        <h3>{`반갑습니다 ${user?.nick}님.`}</h3>
       </div>
       <div className="buttonWrap">
         {data.map((data) => {
@@ -56,6 +60,7 @@ const room = () => {
           );
         })}
       </div>
+      <button onClick={handleLogout}>Logout</button>
     </>
   );
 };

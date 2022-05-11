@@ -21,8 +21,6 @@ database.getConnect = async () => {
       }.bind(this)
     );
 
-    console.log("sql: ", sql);
-
     return sql;
   };
   return connection;
@@ -34,7 +32,7 @@ database.qry = async (sql, reqData) => {
   try {
     const result = await connection.query(sql, reqData);
 
-    console.log(result);
+    console.log(result[0], sql);
     const rows = result[0];
 
     connection.release();

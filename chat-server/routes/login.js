@@ -23,7 +23,8 @@ router.post("/add", jwtSerializer, async function (req, res, next) {
 
   // nick 갔다가 찾아야 하는데 만약에 있으면 아래를 실행하지 않아야 한다.
   const getMemberFromNick = await loginCtr.getLogin(reqData);
-  if (getMemberFromNick.success) {
+  console.log("getMemberFromNick", getMemberFromNick);
+  if (getMemberFromNick.data.length > 0) {
     return res.status(getMemberFromNick.http_status).send(getMemberFromNick);
   }
 
@@ -32,4 +33,9 @@ router.post("/add", jwtSerializer, async function (req, res, next) {
 
   return res.status(resData.http_status).send(resData);
 });
+
+router.post("/logout", async (req, res) => {
+  return res.clearCookie("accessToken").status(200).send({});
+});
+
 module.exports = router;
