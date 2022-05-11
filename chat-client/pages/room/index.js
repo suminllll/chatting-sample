@@ -20,7 +20,6 @@ const room = () => {
   // }, []);
 
   useEffect(() => {
-    console.log("choice", info);
     new Promise(async (res, rej) => {
       const url = `/rooms`;
       const result = await httpRequest("GET", url);

@@ -4,76 +4,100 @@ import Customer from "../../src/component/Customer";
 import { httpRequest } from "../../src/commons/httpRequest";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import { userInfo } from "../../src/store/accounts";
+import useGuard from "../../src/hooks/useGuard";
+import axios from "axios";
 
 const socket = io("http://localhost:8000", { transports: ["websocket"] });
 
 const chatRoom = (props) => {
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState([]);
+  const [message, setMessage] = useState("");
   const [info, setInfo] = useRecoilState(userInfo);
+  const [room, setRoom] = useState("");
+  const { user } = useGuard();
+  const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [count, setCount] = useState(0);
 
-  //채팅방 앞글자만 잘라서 type에 할당해줌
-  //type마다 ui가 다를예정
+  // useEffect(() => {
+  //   socket.emit(
+  //     "/chat/v1/room/join",
+  //     JSON.stringify({
+  //       roomNo: props.roomNo,
+  //       memberNo: user.memberNo,
+  //     })
+  //   );
+  // }, []);
   useEffect(() => {
-    //메세지를 전부 가져오는 api 만들기
-    //type 만들기
-    const type = info.roomTitle.split(" ")[0];
-    setInfo({
-      ...info,
-      roomType: type,
-    });
+    new Promise(async (res, rej) => {
+      const url = `/rooms`;
+      const result = await httpRequest("GET", url);
 
-    socket.emit(
-      "/socket/v1/room/join",
-      JSON.stringify({ roomId: props.roomId, userId: user.id })
-    );
+      if (result.success) {
+        setRoom(result.data[0].room_title);
+      }
+    });
   }, []);
-  console.log("room", info);
 
   useEffect(() => {
-    fetchMessages(props.roomNo).then((res) => {
-      setMessages(res.data);
+    //해당 방의 모든 메세지 불러오기
+    new Promise(async (res, rej) => {
+      const url = `/rooms/chat/${props.roomNo}/message`;
+      const result = await httpRequest("GET", url);
+
+      if (result.success) {
+        setMessages(result.data);
+      }
     });
 
-    fetchRoomUsers(props.roomNo).then((res) => {
-      setUsers(res.data);
+    //접속한 유저 불러오기
+    new Promise(async (res, rej) => {
+      const url = `/rooms/chat/${props.roomNo}/users`;
+      const result = await httpRequest("GET", url);
+
+      if (result.success) {
+        setUsers(result.data);
+      }
     });
   }, []);
 
   const handleMessage = (e) => {
-    setName(e.target.value);
+    e.preventDefault();
+    setMessage(e.target.value);
   };
 
   //useEffect안에 넣어놓기
   socket.on("data", (data) => {
-    setMessage([...message, data]);
+    setMessages([...messages, data]);
   });
 
   //send가 실행되고 채팅 내용이 db로 추가됨
   const handleSend = () => {
-    e.preventDefault();
-    if (chat === "") {
+    if (message.length < 1) {
       alert("채팅 내용을 입력해주세요.");
     }
+    //스크롤로 밑으로 내리기
 
-    socket.emit("rooms", { post: name });
+    //메세지 서버로 보냄
+    socket.emit("rooms", { post: message });
+
+    //db에 채팅내용 저장
     return new Promise(async (res, req) => {
       const url = `/rooms/chat`;
       const data = {
-        member_no: info.memberNo,
-        room_type: info.roomType,
-        room_no: info.roomNo,
-        chat: name,
+        member_no: user.member_no,
+        room_no: props.roomNo,
+        chat: message,
       };
+
       const result = await httpRequest(`POST`, url, data);
 
       if (result.success) {
         setInfo({
           ...info,
-          chat: message,
+          chat: messages,
         });
-
-        setName("");
+        setMessage("");
       }
     });
   };
@@ -88,25 +112,21 @@ const chatRoom = (props) => {
     console.log("err", error);
   });
 
-  //나갔다 들어왔을때 전에 내용 불러옴
-  // useEffect(() => {
-  //   new Promise(async (res, rej) => {
-  //     console.log(`/rooms/chat/${info.roomType}/${info.nick}`);
-  //     const url = `/rooms/chat/${info.roomType}/${info.nick}`;
-  //     const result = await httpRequest("GET", url);
-
-  //     if (result.success) {
-  //       console.log("result", result);
-  //     }
-  //   });
-  // }, []);
-
   return (
     <>
       <div className="chatForm">
+        <div className="joinWrap">
+          <h4 className="roomTitle">{room}</h4>
+          <h4>{`Joined ${users} Members`}</h4>
+          {users.map((user) => (
+            <div className="joinUser" key={user.member_no}>
+              <p>* {user.nick}</p>
+            </div>
+          ))}
+        </div>
         <div className="chatWindow">
           {/* {type === {type} ? (<`${type}` message={message}/>) } */}
-          <Customer message={message} />
+          <Customer messages={messages} users={users} />
         </div>
         <div className="chatInputWrap">
           <input
@@ -114,7 +134,7 @@ const chatRoom = (props) => {
             placeholder="Write a message.."
             onChange={handleMessage}
             onKeyUp={handleEnterOnMessage}
-            value={name}
+            value={message}
           />
           <button className="sendButton" onClick={handleSend}>
             Send

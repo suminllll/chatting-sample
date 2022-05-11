@@ -12,6 +12,7 @@ const router = express.Router();
 //const https = require("https");
 const app = express();
 const server = require("http").createServer(app);
+const chatSocket = require("./routes/chat");
 
 //env를 사용한다는 의미 dotenv
 require("dotenv").config();
@@ -102,7 +103,7 @@ app.use(sessionMiddleware);
 io.on("connection", (socket) => {
   //연결시
   const dateTime = new Date();
-  //console.log(`[console][${dateTime}] connection`);
+  console.log(`[console][${dateTime}] connection`);
   //디비 insert 로직
   // console.log(`[console] connected user socket id:${socket.id}`);
   // console.log(`[console] connected user ip: ${socket.request.connection.remoteAddress}`);
@@ -115,7 +116,7 @@ io.on("connection", (socket) => {
 
     io.emit("data", data);
   });
-
+  chatSocket(io, socket);
   //종료시
   //에러시
 });
