@@ -14,21 +14,16 @@ const chatRoom = (props) => {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const socket = useMemo(
-    () => io("http://localhost:8000", { transports: ["websocket"] }),
-    []
-  );
+  const socket = useMemo(() => io("http://localhost:8000"), []);
 
-  console.log("user", user);
   useEffect(() => {
     if (user) {
       //채팅방 입장시 실행되는 이벤트
       socket.emit("/rooms/join", {
         roomNo: props.roomNo,
-        memberNo: user.member_no,
+        memberNo: user?.member_no,
       });
 
-      //채팅
       socket.on("/rooms/join", (data) => {
         setMessages((prev) => [
           ...prev,
@@ -36,21 +31,36 @@ const chatRoom = (props) => {
         ]);
       });
 
+      //채팅
       socket.on("/rooms/message", (data) => {
-        console.log("eee");
+        const { roomNo, memberNo, chat, nick } = data;
+        setMessages((prev) => [...prev, { roomNo, memberNo, chat, nick }]);
       });
 
+      //채팅방 나가기
       socket.on("/rooms/out", (data) => {
-        console.log("dd");
+        const { roomNo, memberNo } = data;
+        setMessages((prev) => [
+          ...prev,
+          { chat: data.memberNo + "나갔습니다" },
+        ]);
       });
+
+      return () => {
+        socket.emit("/rooms/out", {
+          roomNo: props.roomNo,
+          memberNo: user?.member_no,
+        });
+        socket.disconnect();
+      };
     }
   }, [user]);
 
-  useEffect(() => {
-    socket.on("data", (data) => {
-      setMessages([...messages, data]);
-    });
-  }, []);
+  // useEffect(() => {
+  //   socket.on("data", (data) => {
+  //     setMessages([...messages, data]);
+  //   });
+  // }, []);
 
   useEffect(() => {
     new Promise(async (res, rej) => {
@@ -92,33 +102,31 @@ const chatRoom = (props) => {
 
   //send가 실행되고 채팅 내용이 db로 추가됨
   const handleSend = () => {
-    if (message.length < 1) {
+    if (message.length === 0) {
       alert("채팅 내용을 입력해주세요.");
+      return;
     }
     //스크롤로 밑으로 내리기
 
+    // setMessages((prev) => [
+    //   ...prev,
+    //   {
+    //     chat: message,
+    //     roomNo: props.roomNo,
+    //     memberNo: user.memberNo,
+    //     nick: user.nick,
+    //   },
+    // ]);
+
     //메세지 서버로 보냄
-    socket.emit("rooms", { post: message });
-
-    //db에 채팅내용 저장
-    return new Promise(async (res, req) => {
-      const url = `/rooms/chat`;
-      const data = {
-        member_no: user.member_no,
-        room_no: props.roomNo,
-        chat: message,
-      };
-
-      const result = await httpRequest(`POST`, url, data);
-
-      if (result.success) {
-        setInfo({
-          ...info,
-          chat: messages,
-        });
-        setMessage("");
-      }
+    socket.emit("/rooms/message", {
+      chat: message,
+      roomNo: props.roomNo,
+      memberNo: user.member_no,
+      nick: user.nick,
     });
+
+    setMessage("");
   };
 
   const handleEnterOnMessage = (e) => {

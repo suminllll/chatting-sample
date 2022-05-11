@@ -1,7 +1,9 @@
+import { useEffect, useRef } from "react";
 import useGuard from "../../src/hooks/useGuard";
 
 const Customer = ({ messages, users }) => {
   const { user } = useGuard();
+  const bottomRef = useRef();
   //console.log("messages", messages);
   //현재시간 구하기
   const now = new Date();
@@ -9,6 +11,10 @@ const Customer = ({ messages, users }) => {
   const minutes = now.getMinutes();
   const ampm = hours >= 12 ? "pm" : "am";
   const time = `${hours}:${minutes} ${ampm}`;
+
+  useEffect(() => {
+    bottomRef.current.scrollIntoView({ scroll: "smooth" });
+  }, [messages.length]);
 
   // console.log("message", messages);
   return (
@@ -29,6 +35,7 @@ const Customer = ({ messages, users }) => {
               </div>
             );
           })}
+          <div ref={bottomRef} />
         </div>
       </div>
     </>

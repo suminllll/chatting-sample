@@ -121,12 +121,27 @@ io.on("connection", (socket) => {
   socket.on("/rooms/message", function (data) {
     console.log("message", data);
     const { roomNo, memberNo, chat, nick } = data;
-    io.in(roomNo).emit("/rooms/message", data);
+    _db
+      .qry(
+        `INSERT INTO chat(room_no, member_no, chat, sended) VALUES (:roomNo, :memberNo, :chat, now())`,
+        data
+      )
+      .then(() => {
+        io.in(roomNo).emit("/rooms/message", data);
+      });
   });
 
   //채팅방 나가기
   socket.on("/rooms/out", function (data) {
-    console.log("rooms/out", data);
+    const { roomNo, memberNo } = data;
+    socket.leave(roomNo);
+    io.in(roomNo).emit("/rooms/out", data);
+    _db
+      .qry(
+        `DELETE FROM room_users WHERE room_no = :roomNo AND member_no = :memberNo`,
+        data
+      )
+      .then(() => {});
   });
 });
 
