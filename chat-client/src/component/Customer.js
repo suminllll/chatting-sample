@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
-import useGuard from "../../src/hooks/useGuard";
 
-const Customer = ({ messages, users }) => {
-  const { user } = useGuard();
+const Customer = ({ nowMessages, comeMessage, getMessages }) => {
   const bottomRef = useRef();
+
   //console.log("messages", messages);
   //현재시간 구하기
   const now = new Date();
@@ -14,24 +13,54 @@ const Customer = ({ messages, users }) => {
 
   useEffect(() => {
     bottomRef.current.scrollIntoView({ scroll: "smooth" });
-  }, [messages.length]);
+  }, [nowMessages.length]);
 
-  // console.log("message", messages);
+  //받아온 시간 짜르기
+  useEffect(() => {
+    const sended = getMessages.sended;
+  }, [getMessages]);
+
   return (
     <>
       <div>
         <div>
-          {messages.map((message) => {
+          {getMessages.map((message, index) => {
             return (
-              <div className="contentWrap" key={message.chat_no}>
-                <div className="imgBox">
-                  <img alt="profileImg" src="/img/profile.jpeg" />
+              <div key={index}>
+                <div className="otherMsg">
+                  <div className="imgBox">
+                    <img alt="profileImg" src="/img/profile.jpeg" />
+                  </div>
+                  <ul className="chatWrap">
+                    <li className="profileName">{message.nick}</li>
+                    <li className="chatList">{message.chat}</li>
+                    <li className="time">{message.sended}</li>
+                  </ul>
                 </div>
-                <ul className="chatWrap">
-                  <li className="profileName">{message.nick}</li>
-                  <li className="chatList">{message.chat}</li>
-                  <li className="time">{time}</li>
-                </ul>
+                <div />
+              </div>
+            );
+          })}
+          {nowMessages.map((message, index) => {
+            return (
+              <div key={index}>
+                <div className="myMsg">
+                  <div>
+                    <ul className="chatWrap">
+                      <li className="profileName">{message.nick}</li>
+                      <li className="chatList">{message.chat}</li>
+                      <li className="time">{time}</li>
+                    </ul>
+                  </div>
+                </div>
+                <div>
+                  {comeMessage === "in" && (
+                    <div>{message.nick}님이 들어오셨습니다.</div>
+                  )}
+                  {comeMessage === "out" && (
+                    <div>{message.nick}님이 나가셨습니다.</div>
+                  )}
+                </div>
               </div>
             );
           })}

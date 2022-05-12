@@ -1,67 +1,82 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { io } from "socket.io-client";
 import Customer from "../../src/component/Customer";
 import { httpRequest } from "../../src/commons/httpRequest";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import { userInfo } from "../../src/store/accounts";
 import useGuard from "../../src/hooks/useGuard";
+import { useRouter } from "next/router";
 
-const chatRoom = (props) => {
+export default function chatRoom(props) {
   const [message, setMessage] = useState("");
-  const [info, setInfo] = useRecoilState(userInfo);
+
   const [room, setRoom] = useState("");
   const { user } = useGuard();
-  const [messages, setMessages] = useState([]);
+  const [nowMessages, setNowMessages] = useState([]);
   const [users, setUsers] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [comeMessage, setComeMessage] = useState("");
+  const router = useRouter();
   const socket = useMemo(() => io("http://localhost:8000"), []);
+  const [getMessages, setGetMessages] = useState([]);
 
+  //console.log("user", user);
   useEffect(() => {
     if (user) {
       //채팅방 입장시 실행되는 이벤트
-      socket.emit("/rooms/join", {
-        roomNo: props.roomNo,
-        memberNo: user?.member_no,
-      });
+      socket.emit(
+        "/rooms/join",
+        JSON.stringify({
+          roomNo: props.roomNo,
+          memberNo: user?.member_no,
+        })
+      );
 
       socket.on("/rooms/join", (data) => {
-        setMessages((prev) => [
-          ...prev,
-          { chat: data.memberNo + "들어왔습니다" },
-        ]);
+        console.log("joinuser", data);
+        if (data) {
+          const result = httpRequest(
+            "GET",
+            `/rooms/chat/${props.roomNo}/users`
+          );
+          if (result.success) {
+            setUsers(result.data);
+            return setComeMessage("in");
+          }
+        }
       });
 
-      //채팅
+      //서버에서 채팅 내용 받기
       socket.on("/rooms/message", (data) => {
-        const { roomNo, memberNo, chat, nick } = data;
-        setMessages((prev) => [...prev, { roomNo, memberNo, chat, nick }]);
+        const messageData = JSON.parse(data);
+        console.log("get message", messageData);
+
+        setNowMessages((messages) => [...messages, messageData.data]);
+      });
+
+      socket.on("connect_error", (error) => {
+        console.log("err", error);
       });
 
       //채팅방 나가기
       socket.on("/rooms/out", (data) => {
-        const { roomNo, memberNo } = data;
-        setMessages((prev) => [
-          ...prev,
-          { chat: data.memberNo + "나갔습니다" },
-        ]);
+        console.log("outuser", data);
+        if (data) return setComeMessage("out");
       });
 
       return () => {
-        socket.emit("/rooms/out", {
-          roomNo: props.roomNo,
-          memberNo: user?.member_no,
-        });
+        socket.emit(
+          "/rooms/out",
+          JSON.stringify({
+            roomNo: props.roomNo,
+            memberNo: user?.member_no,
+          })
+        );
         socket.disconnect();
       };
     }
   }, [user]);
 
-  // useEffect(() => {
-  //   socket.on("data", (data) => {
-  //     setMessages([...messages, data]);
-  //   });
-  // }, []);
-
+  //해당 채팅방 이름 가져오기
   useEffect(() => {
     new Promise(async (res, rej) => {
       const url = `/rooms`;
@@ -80,7 +95,7 @@ const chatRoom = (props) => {
       const result = await httpRequest("GET", url);
 
       if (result.success) {
-        setMessages(result.data);
+        setGetMessages(result.data);
       }
     });
 
@@ -90,7 +105,7 @@ const chatRoom = (props) => {
       const result = await httpRequest("GET", url);
 
       if (result.success) {
-        setUsers(result.data);
+        return setUsers(result.data);
       }
     });
   }, []);
@@ -106,17 +121,6 @@ const chatRoom = (props) => {
       alert("채팅 내용을 입력해주세요.");
       return;
     }
-    //스크롤로 밑으로 내리기
-
-    // setMessages((prev) => [
-    //   ...prev,
-    //   {
-    //     chat: message,
-    //     roomNo: props.roomNo,
-    //     memberNo: user.memberNo,
-    //     nick: user.nick,
-    //   },
-    // ]);
 
     //메세지 서버로 보냄
     socket.emit("/rooms/message", {
@@ -135,14 +139,24 @@ const chatRoom = (props) => {
     }
   };
 
-  socket.on("connect_error", (error) => {
-    console.log("err", error);
-  });
+  const handleClickBack = () => {
+    socket.emit(
+      "/rooms/out",
+      JSON.stringify({
+        roomNo: props.roomNo,
+        memberNo: user?.member_no,
+      })
+    );
+    socket.disconnect();
+
+    router.replace("/room");
+  };
 
   return (
     <>
       <div className="chatForm">
         <div className="joinWrap">
+          <button onClick={handleClickBack}>Back</button>
           <h4 className="roomTitle">{room}</h4>
           <h4>{`Joined ${users.length} Members`}</h4>
           {users.map((user) => (
@@ -153,7 +167,11 @@ const chatRoom = (props) => {
         </div>
         <div className="chatWindow">
           {/* {type === {type} ? (<`${type}` message={message}/>) } */}
-          <Customer messages={messages} users={users} />
+          <Customer
+            getMessages={getMessages}
+            nowMessages={nowMessages}
+            comeMessage={comeMessage}
+          />
         </div>
         <div className="chatInputWrap">
           <input
@@ -170,9 +188,7 @@ const chatRoom = (props) => {
       </div>
     </>
   );
-};
-
-export default chatRoom;
+}
 
 export const getServerSideProps = async (ctx) => {
   return {

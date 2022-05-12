@@ -18,7 +18,7 @@ loginCtr.addLogin = async (_reqData) => {
   inputSql = `INSERT INTO member(nick, joined) VALUES(:nick, now())`;
   outputSql = await _db.qry(inputSql, _reqData);
   if (!outputSql.success) return _res.internalServerErr();
-
+  console.log(outputSql);
   return _res.created(outputSql.result.insertId);
 };
 

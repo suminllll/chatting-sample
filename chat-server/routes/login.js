@@ -28,9 +28,9 @@ router.post("/add", jwtSerializer, async function (req, res, next) {
     return res.status(getMemberFromNick.http_status).send(getMemberFromNick);
   }
 
-  // 닉이 없어
+  // nick이 없으면 실행
   const resData = await loginCtr.addLogin(reqData);
-
+  console.log("resData", resData);
   return res.status(resData.http_status).send(resData);
 });
 

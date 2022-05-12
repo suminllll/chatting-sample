@@ -24,7 +24,6 @@ const main = () => {
         const result = await httpRequest("POST", url, data);
 
         if (result.success) {
-          console.log("result2", result);
           setInfo({
             ...info,
             memberNo: result.data,
@@ -38,9 +37,9 @@ const main = () => {
     }
   };
 
-  useEffect(() => {
-    console.log(info);
-  }, [info]);
+  // useEffect(() => {
+  //   console.log(info);
+  // }, [info]);
 
   return (
     <>

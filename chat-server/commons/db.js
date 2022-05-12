@@ -32,7 +32,7 @@ database.qry = async (sql, reqData) => {
   try {
     const result = await connection.query(sql, reqData);
 
-    console.log(result[0], sql);
+    console.log("in db", result[0], sql);
     const rows = result[0];
 
     connection.release();

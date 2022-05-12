@@ -22,10 +22,6 @@ global._common = require(__base + "commons/common");
 global._res = require(__base + "commons/response");
 global._db = require(__base + "commons/db");
 global._constants = require(__base + "commons/constants");
-//const jwt = require(__base + "commons/jwt");
-//const _jwt = require(__base + "commons/jwt");
-
-//const httpsServer = https.createServer(app)
 
 // 보안을 위해 사용
 //helmet library contentSecurityPolicy빼고 다 true
@@ -60,7 +56,7 @@ const storeOption = {
   },
 };
 
-//console.log('storeOption', storeOption);
+// //console.log('storeOption', storeOption);
 const sessionStore = new MySQLStore(storeOption);
 const sessionMiddleware = session({
   key: process.env.SECURITY_SESSION_KEY,
@@ -69,7 +65,6 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
 });
-//console.log(`[console] sessionMiddleware1: ${sessionMiddleware}`)
 
 //채팅관련
 const io = require("socket.io")(server, {
@@ -87,27 +82,25 @@ io.use(function (socket, next) {
 
 app.use(sessionMiddleware);
 
-// const memberRoom = [];
-//받음
+//socket
 io.on("connection", (socket) => {
-  //연결시
-  const dateTime = new Date();
+  //const dateTime = new Date();
   //console.log(`[console][${dateTime}] connection`);
-  //디비 insert 로직
   // console.log(`[console] connected user socket id:${socket.id}`);
   // console.log(`[console] connected user ip: ${socket.request.connection.remoteAddress}`);
 
-  const req = socket.request;
-  //console.log("req", req);
+  // const req = socket.request;
+  // console.log("socketreq", req);
 
   //채팅방 입장시 실행되는 이벤트
-  socket.on("/rooms/join", function (data) {
-    console.log("data", data);
-    const { roomNo, memberNo } = data;
+  socket.on("/rooms/join", (data) => {
+    console.log("!!!!joindata", data);
+    const messageData = JSON.parse(data);
+    const { roomNo, memberNo } = messageData;
     _db
       .qry(
         "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
-        data
+        messageData
       )
       .then(() => {
         //그 방에 집어넣는다
@@ -118,30 +111,47 @@ io.on("connection", (socket) => {
   });
 
   //채팅
-  socket.on("/rooms/message", function (data) {
-    console.log("message", data);
+  socket.on("/rooms/message", (data) => {
+    console.log("!!!!message", data);
     const { roomNo, memberNo, chat, nick } = data;
     _db
       .qry(
-        `INSERT INTO chat(room_no, member_no, chat, sended) VALUES (:roomNo, :memberNo, :chat, now())`,
+        `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`,
         data
       )
-      .then(() => {
-        io.in(roomNo).emit("/rooms/message", data);
+      .then((result) => {
+        io.in(roomNo).emit(
+          "/rooms/message",
+          JSON.stringify({ ...result, data })
+        );
       });
   });
 
+  // if (!jwtDeserializer) console.log("jwt 없음!");
+  // //socket.disconnect();
+  // return;
+
   //채팅방 나가기
-  socket.on("/rooms/out", function (data) {
-    const { roomNo, memberNo } = data;
-    socket.leave(roomNo);
-    io.in(roomNo).emit("/rooms/out", data);
+  socket.on("/rooms/out", (data) => {
+    console.log("!!!!out", data);
+    const messageData = JSON.parse(data);
+    const { roomNo, memberNo } = messageData;
+
     _db
       .qry(
         `DELETE FROM room_users WHERE room_no = :roomNo AND member_no = :memberNo`,
-        data
+        messageData
       )
-      .then(() => {});
+      .then(() => {
+        socket.leave(roomNo);
+        io.in(roomNo).emit("/rooms/out", data);
+      });
+    //io.to(msg).emit("live_end_notice", msg + "번방 라이브 종료");
+  });
+
+  socket.on("connect_error", (err) => {
+    console.log("connection err", err);
+    socket.disconnect();
   });
 });
 
@@ -204,6 +214,7 @@ function readdirAsync(path) {
     fs.readdir(path, function (error, result) {
       if (error) {
         reject(error);
+        f;
       } else {
         resolve(result);
       }

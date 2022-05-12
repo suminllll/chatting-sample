@@ -43,7 +43,7 @@ const room = () => {
     });
     route.replace(`/room/${data.room_no}`);
   };
-  console.log("user", user);
+
   return (
     <>
       <div>
