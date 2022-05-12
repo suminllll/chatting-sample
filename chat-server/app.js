@@ -9,7 +9,6 @@ const MySQLStore = require("express-mysql-session")(session);
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const router = express.Router();
-//const https = require("https");
 const app = express();
 const server = require("http").createServer(app);
 
@@ -23,18 +22,6 @@ global._common = require(__base + "commons/common");
 global._res = require(__base + "commons/response");
 global._db = require(__base + "commons/db");
 global._constants = require(__base + "commons/constants");
-const _jwt = require(__base + "commons/jwt");
-
-// const privateKey = fs.readFileSync(process.env.PRIVATE_KEY, "utf8");
-// const certificate = fs.readFileSync(process.env.CERTIFICATE, "utf8");
-// const ca = fs.readFileSync(process.env.CHAIN, "utf8");
-// const credentials = {
-//   key: privateKey,
-//   cert: certificate,
-//   ca: ca,
-// };
-
-//const httpsServer = https.createServer(app)
 
 // 보안을 위해 사용
 //helmet library contentSecurityPolicy빼고 다 true
@@ -45,7 +32,7 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser(process.env.SECURITY_COOKIE));
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cors({ origin: true, credentials: true }));
@@ -69,7 +56,7 @@ const storeOption = {
   },
 };
 
-//console.log('storeOption', storeOption);
+// //console.log('storeOption', storeOption);
 const sessionStore = new MySQLStore(storeOption);
 const sessionMiddleware = session({
   key: process.env.SECURITY_SESSION_KEY,
@@ -78,9 +65,7 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
 });
-//console.log(`[console] sessionMiddleware1: ${sessionMiddleware}`)
 
-// async function dbConnect() {
 //채팅관련
 const io = require("socket.io")(server, {
   cors: {
@@ -97,27 +82,77 @@ io.use(function (socket, next) {
 
 app.use(sessionMiddleware);
 
-const memberRoom = [];
-
-//받음
+//socket
 io.on("connection", (socket) => {
-  //연결시
-  const dateTime = new Date();
+  //const dateTime = new Date();
   //console.log(`[console][${dateTime}] connection`);
   // console.log(`[console] connected user socket id:${socket.id}`);
   // console.log(`[console] connected user ip: ${socket.request.connection.remoteAddress}`);
 
-  const req = socket.request;
-  //console.log("req", req);
+  // const req = socket.request;
+  // console.log("socketreq", req);
 
-  socket.on("rooms", function (data) {
-    //console.log("[console] data", data);
-
-    io.emit("data", data);
+  //채팅방 입장시 실행되는 이벤트
+  socket.on("/rooms/join", (data) => {
+    console.log("!!!!joindata", data);
+    const messageData = JSON.parse(data);
+    const { roomNo, memberNo } = messageData;
+    _db
+      .qry(
+        "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
+        messageData
+      )
+      .then(() => {
+        //그 방에 집어넣는다
+        socket.join(roomNo);
+        //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
+        io.in(roomNo).emit("/rooms/join", data);
+      });
   });
 
-  //종료시
-  //에러시
+  //채팅
+  socket.on("/rooms/message", (data) => {
+    console.log("!!!!message", data);
+    const { roomNo, memberNo, chat, nick } = data;
+    _db
+      .qry(
+        `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`,
+        data
+      )
+      .then((result) => {
+        io.in(roomNo).emit(
+          "/rooms/message",
+          JSON.stringify({ ...result, data })
+        );
+      });
+  });
+
+  // if (!jwtDeserializer) console.log("jwt 없음!");
+  // //socket.disconnect();
+  // return;
+
+  //채팅방 나가기
+  socket.on("/rooms/out", (data) => {
+    console.log("!!!!out", data);
+    const messageData = JSON.parse(data);
+    const { roomNo, memberNo } = messageData;
+
+    _db
+      .qry(
+        `DELETE FROM room_users WHERE room_no = :roomNo AND member_no = :memberNo`,
+        messageData
+      )
+      .then(() => {
+        socket.leave(roomNo);
+        io.in(roomNo).emit("/rooms/out", data);
+      });
+    //io.to(msg).emit("live_end_notice", msg + "번방 라이브 종료");
+  });
+
+  socket.on("connect_error", (err) => {
+    console.log("connection err", err);
+    socket.disconnect();
+  });
 });
 
 //-- 채팅관련 끝
@@ -179,6 +214,7 @@ function readdirAsync(path) {
     fs.readdir(path, function (error, result) {
       if (error) {
         reject(error);
+        f;
       } else {
         resolve(result);
       }
@@ -187,7 +223,7 @@ function readdirAsync(path) {
 }
 
 async function main() {
-  // global.jwt = _jwt(process.env.JWT_SECRET);
+  //global.jwt = jwt(process.env.JWT_SECRET);
 
   //데이터베이스 연결 생성
   global.pool = mysql.createPool({
@@ -218,6 +254,8 @@ async function main() {
       app.use("/", router);
     }
   }
+  // const loginRoutes = require("./routes/login");
+  // app.use("/login", loginRoutes);
   // --- 자동 라우터 등록 ---.
 
   // 404 (API 를 찾을 수 없는 경우)

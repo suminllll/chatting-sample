@@ -21,8 +21,6 @@ database.getConnect = async () => {
       }.bind(this)
     );
 
-    console.log("sql: ", sql);
-
     return sql;
   };
   return connection;
@@ -33,10 +31,12 @@ database.qry = async (sql, reqData) => {
   const connection = await _db.getConnect();
   try {
     const result = await connection.query(sql, reqData);
+
+    console.log("in db", result[0], sql);
     const rows = result[0];
 
     connection.release();
-    console.log("rows->", rows);
+
     return { success: true, result: rows };
   } catch (err) {
     console.log("database.query - \n\r", err);

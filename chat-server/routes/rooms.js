@@ -1,6 +1,7 @@
 const roomCtr = require("../controller/rooms");
 const express = require("express");
 const router = express.Router();
+const { jwtDeserializer } = require("../commons/jwt");
 
 router.get("/", async function (req, res, next) {
   const reqData = {};
@@ -32,13 +33,24 @@ router.post("/chat", async function (req, res, next) {
   return res.status(resData.http_status).send(resData);
 });
 
-router.get("/chat/:room_type/:nick", async function (req, res, next) {
+//모든 채팅내용 불러옴
+router.get("/chat/:room_no/message", jwtDeserializer, async (req, res) => {
   const reqData = {
-    room_type: req.params.room_type,
-    nick: req.params.nick,
+    room_no: req.params.room_no,
   };
 
   const resData = await roomCtr.getChat(reqData);
+
+  return res.status(resData.http_status).send(resData);
+});
+
+//접속한 유저 불러옴
+router.get("/chat/:room_no/users", jwtDeserializer, async (req, res) => {
+  const reqData = {
+    room_no: req.params.room_no,
+  };
+
+  const resData = await roomCtr.getUser(reqData);
 
   return res.status(resData.http_status).send(resData);
 });
