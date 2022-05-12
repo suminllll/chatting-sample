@@ -2,15 +2,14 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { io } from "socket.io-client";
 import Customer from "../../src/component/Customer";
 import { httpRequest } from "../../src/commons/httpRequest";
-import { useRecoilState, useResetRecoilState } from "recoil";
-import { userInfo } from "../../src/store/accounts";
 import useGuard from "../../src/hooks/useGuard";
 import { useRouter } from "next/router";
+import Chatter from "../../src/component/Chatter.js";
 
 export default function chatRoom(props) {
   const [message, setMessage] = useState("");
 
-  const [room, setRoom] = useState("");
+  const [room, setRoom] = useState([]);
   const { user } = useGuard();
   const [nowMessages, setNowMessages] = useState([]);
   const [users, setUsers] = useState([]);
@@ -19,7 +18,7 @@ export default function chatRoom(props) {
   const socket = useMemo(() => io("http://localhost:8000"), []);
   const [getMessages, setGetMessages] = useState([]);
 
-  //console.log("user", user);
+  console.log("user", user);
   useEffect(() => {
     if (user) {
       //채팅방 입장시 실행되는 이벤트
@@ -83,7 +82,8 @@ export default function chatRoom(props) {
       const result = await httpRequest("GET", url);
 
       if (result.success) {
-        setRoom(result.data[0].room_title);
+        setRoom(result.data.room_title);
+        //console.log(result.data.room_title);
       }
     });
   }, []);
@@ -166,8 +166,12 @@ export default function chatRoom(props) {
           ))}
         </div>
         <div className="chatWindow">
-          {/* {type === {type} ? (<`${type}` message={message}/>) } */}
           <Customer
+            getMessages={getMessages}
+            nowMessages={nowMessages}
+            comeMessage={comeMessage}
+          />
+          <Chatter
             getMessages={getMessages}
             nowMessages={nowMessages}
             comeMessage={comeMessage}
