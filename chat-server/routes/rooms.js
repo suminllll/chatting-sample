@@ -10,9 +10,9 @@ router.get("/", async function (req, res, next) {
   return res.status(resData.http_status).send(resData);
 });
 
-router.get("/:id", async function (req, res, next) {
+router.get("/:room_no", async function (req, res, next) {
   const reqData = {
-    room_no: req.params.id,
+    room_no: req.params.room_no,
   };
 
   const resData = await roomCtr.getRoom(reqData);
