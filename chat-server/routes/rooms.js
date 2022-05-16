@@ -10,9 +10,9 @@ router.get("/", async function (req, res, next) {
   return res.status(resData.http_status).send(resData);
 });
 
-router.get("/:id", async function (req, res, next) {
+router.get("/:room_no", async function (req, res, next) {
   const reqData = {
-    room_no: req.params.id,
+    room_no: req.params.room_no,
   };
 
   const resData = await roomCtr.getRoom(reqData);
@@ -45,9 +45,10 @@ router.get("/chat/:room_no/message", jwtDeserializer, async (req, res) => {
 });
 
 //접속한 유저 불러옴
-router.get("/chat/:room_no/users", jwtDeserializer, async (req, res) => {
+router.get("/chat/:member_no/userList", jwtDeserializer, async (req, res) => {
   const reqData = {
-    room_no: req.params.room_no,
+    // room_no: req.params.room_no,
+    member_no: req.params.member_no,
   };
 
   const resData = await roomCtr.getUser(reqData);

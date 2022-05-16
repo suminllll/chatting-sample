@@ -10,6 +10,10 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const app = express();
+// const server = require("http").createServer(app);
+//const socketio = require("socket.io");
+//const http = require("http");
+//const httpServer = http.createServer(app);
 const server = require("http").createServer(app);
 
 //env를 사용한다는 의미 dotenv
@@ -56,7 +60,6 @@ const storeOption = {
   },
 };
 
-// //console.log('storeOption', storeOption);
 const sessionStore = new MySQLStore(storeOption);
 const sessionMiddleware = session({
   key: process.env.SECURITY_SESSION_KEY,
@@ -66,53 +69,58 @@ const sessionMiddleware = session({
   saveUninitialized: false,
 });
 
+app.use(sessionMiddleware);
+
 //채팅관련
 const io = require("socket.io")(server, {
   cors: {
-    origin: "*",
+    origin: ["http://localhost:3001"],
     methods: ["GET", "POST"],
+    allowEIO3: true,
   },
 });
 
-//세션 읽을 수 있도록 해주는 미들웨어
-io.use(function (socket, next) {
-  sessionMiddleware(socket.request, socket.request.res || {}, next);
-  //console.log(`[console] sessionMiddleware2: ${sessionMiddleware}`);
-});
-
-app.use(sessionMiddleware);
+let userList = [];
 
 //socket
 io.on("connection", (socket) => {
-  //const dateTime = new Date();
-  //console.log(`[console][${dateTime}] connection`);
-  // console.log(`[console] connected user socket id:${socket.id}`);
-  // console.log(`[console] connected user ip: ${socket.request.connection.remoteAddress}`);
-
-  // const req = socket.request;
-  // console.log("socketreq", req);
-
+  //console.log("소켓연결");
   //채팅방 입장시 실행되는 이벤트
-  socket.on("/rooms/join", (data) => {
-    console.log("!!!!joindata", data);
-    const messageData = JSON.parse(data);
+  socket.on("/rooms/join", async (data) => {
+    const messageData = await JSON.parse(data);
     const { roomNo, memberNo } = messageData;
-    _db
-      .qry(
-        "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
-        messageData
-      )
-      .then(() => {
-        //그 방에 집어넣는다
-        socket.join(roomNo);
-        //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
-        io.in(roomNo).emit("/rooms/join", data);
-      });
+    console.log("채팅방 입장", messageData);
+
+    if (!userList.includes(memberNo)) {
+      userList.push(memberNo);
+
+      _db
+        .qry(
+          "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
+          messageData
+        )
+        .then(() => {
+          //그 방에 집어넣는다
+          socket.join(roomNo);
+
+          //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
+          io.in(roomNo).emit("/rooms/join", userList);
+          console.log("클라이언트로 보내기", roomNo, userList);
+        });
+
+      console.log("추가된 유저", userList);
+    }
   });
+
+  //------
+  socket.on("/rooms/a", (data) => {
+    io.emit("/rooms/a", data);
+  });
+  //------
 
   //채팅
   socket.on("/rooms/message", (data) => {
-    console.log("!!!!message", data);
+    console.log("채팅받음", data);
     const { roomNo, memberNo, chat, nick } = data;
     _db
       .qry(
@@ -124,29 +132,37 @@ io.on("connection", (socket) => {
           "/rooms/message",
           JSON.stringify({ ...result, data })
         );
+        console.log("채팅보냄");
       });
   });
 
-  // if (!jwtDeserializer) console.log("jwt 없음!");
-  // //socket.disconnect();
-  // return;
-
   //채팅방 나가기
   socket.on("/rooms/out", (data) => {
-    console.log("!!!!out", data);
+    console.log("채팅방 나감", data);
     const messageData = JSON.parse(data);
     const { roomNo, memberNo } = messageData;
+
+    socket.leave(roomNo, memberNo);
+    io.in(roomNo).emit("/rooms/out", data);
+
+    //userList에서 나간 유저 삭제
+    //const outUserList = userList.filter((user) => user !== memberNo);
+    userList = userList.filter((user) => user !== memberNo);
+
+    //userList client로 보냄
+    io.in(roomNo).emit("/rooms/out", userList);
+    console.log("삭제멤버 데이터", userList);
 
     _db
       .qry(
         `DELETE FROM room_users WHERE room_no = :roomNo AND member_no = :memberNo`,
         messageData
       )
-      .then(() => {
-        socket.leave(roomNo);
-        io.in(roomNo).emit("/rooms/out", data);
-      });
-    //io.to(msg).emit("live_end_notice", msg + "번방 라이브 종료");
+      .then(() => {});
+  });
+
+  socket.on("disconnect", () => {
+    console.log("연결끊김", socket.id);
   });
 
   socket.on("connect_error", (err) => {
@@ -154,36 +170,8 @@ io.on("connection", (socket) => {
     socket.disconnect();
   });
 });
-
 //-- 채팅관련 끝
 
-// //socket.join, socket.leave를 할 때는 방이름(방번호)를 문자열로 넣어줘야함
-// io.on('connection', async (socket) => {
-//
-//   //로그인한 사용자가 아니라면 disconnect 시킴
-//   if(req.session['member'] === undefined)
-//   socket.disconnect();
-//   return;
-
-//   const userToken = req.session['member'];
-
-//   const memberInfo = await jwt.verify(userToken);
-
-//   console.log(`[console] memberInfo.n : ${memberInfo.n}`)
-
-//   const member = {
-//     member_no: memberInfo.n,
-//     email: socket.id,
-//     ip: socket.request.connection.remoteAddress,
-//     room_no: '0',
-//   };
-
-// })
-// api 요청 횟수 제한
-// cors 밑에 두어야 NetWork Error가 아닌 config내용대로 message를 리턴함
-// opengraph 기능사용으로 nextjs 에서 getserversideprops에서 요청할 때
-// 서버 ip로 요청하여 모든 사용자가 같은 ip로 인식되기 때문에 차단이 되기 쉽다.
-// 그래서 실제 클라이언트 ip로 판단을 할 수 있는 방법을 찾은 후 주석을 풀어야 함
 app.use(
   rateLimit({
     windowMs: 1 * 60 * 1000, // 1분
@@ -223,8 +211,6 @@ function readdirAsync(path) {
 }
 
 async function main() {
-  //global.jwt = jwt(process.env.JWT_SECRET);
-
   //데이터베이스 연결 생성
   global.pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -254,9 +240,6 @@ async function main() {
       app.use("/", router);
     }
   }
-  // const loginRoutes = require("./routes/login");
-  // app.use("/login", loginRoutes);
-  // --- 자동 라우터 등록 ---.
 
   // 404 (API 를 찾을 수 없는 경우)
   app.use(function (req, res, next) {

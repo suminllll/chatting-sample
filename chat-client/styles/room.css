@@ -1,3 +1,14 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  height: 50px;
+}
+
+.helloNick {
+  margin: 14px;
+  font-weight: bold;
+}
+
 .buttonWrap {
   text-align: center;
   display: flex;
@@ -11,4 +22,39 @@
   width: 200px;
   margin-right: 50px;
   font-size: 20px;
+}
+
+.errorMessageBox > p {
+  color: #f00;
+}
+
+.roomListBox {
+  display: flex;
+  flex-direction: column;
+
+  width: 300px;
+}
+
+.userBox {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+}
+
+.left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }

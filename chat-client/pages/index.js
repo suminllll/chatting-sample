@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import { userInfo } from "../src/store/accounts";
 import { httpRequest } from "../src/commons/httpRequest";
@@ -8,38 +8,26 @@ const main = () => {
   const route = useRouter();
   const [info, setInfo] = useRecoilState(userInfo);
 
-  const handelLogin = (e) => {
+  //입력한 닉네임이 저장됨
+  const handleInputNickname = (e) => {
     setInfo({ ...info, nick: e.target.value });
   };
 
-  const handleLoginButton = (e) => {
-    e.preventDefault();
-    if (e.key === "Enter") {
-      // if (result.success && result.data.length < 1) {
-      return new Promise(async (res, rej) => {
-        const url = `/login/add`;
-        const data = {
-          nick: info.nick,
-        };
-        const result = await httpRequest("POST", url, data);
+  //room_title을 불러와서 버튼에 뿌려줌
+  const handleLogin = useCallback(async () => {
+    await httpRequest("POST", `/login/add`, info);
+    route.replace("/room");
+  }, [info]);
 
-        if (result.success) {
-          setInfo({
-            ...info,
-            memberNo: result.data,
-          });
-          route.replace("/room");
-        }
-      });
-      //}
-      // route.replace("/room");
-      // });
-    }
-  };
-
-  // useEffect(() => {
-  //   console.log(info);
-  // }, [info]);
+  //닉네임 입력후 엔터를 누르면 login 함수를 호출
+  const handleKeyEnter = useCallback(
+    async (e) => {
+      if (e.key === "Enter") {
+        handleLogin();
+      }
+    },
+    [handleLogin]
+  );
 
   return (
     <>
@@ -49,10 +37,10 @@ const main = () => {
           <div>
             <input
               className="loginInput"
-              onChange={handelLogin}
-              onKeyUp={handleLoginButton}
+              onChange={handleInputNickname}
+              onKeyUp={handleKeyEnter}
             />
-            <button onClick={handleLoginButton}>Login</button>
+            <button onClick={handleLogin}>Login</button>
           </div>
         </div>
       </div>

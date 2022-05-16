@@ -35,7 +35,7 @@ function jwtSerializer(req, res, next) {
 //token descript
 async function jwtDeserializer(req, res, next) {
   const accessToken = req.signedCookies.accessToken;
-  console.log("accessToken", accessToken);
+  // console.log("accessToken", accessToken);
   if (!accessToken) {
     return res.status(401).send({
       result: false,
