@@ -15,5 +15,10 @@ module.exports = {
       net: "empty",
     },
   },
+  browser: {
+    fs: false,
+    path: false,
+    os: false,
+  },
   externals: [nodeExternals()],
 };

@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react";
 
-const Customer = ({ nowMessages, comeMessage, getMessages, users }) => {
+const Customer = ({
+  nowMessages,
+  comeMessage,
+  getMessages,
+  userList,
+  user,
+}) => {
   const bottomRef = useRef();
 
   //console.log("messages", messages);
@@ -14,7 +20,7 @@ const Customer = ({ nowMessages, comeMessage, getMessages, users }) => {
   //채팅 입력하면 focus가 맨 아래로 맞춰짐
   useEffect(() => {
     bottomRef.current.scrollIntoView({ scroll: "smooth" });
-  }, [nowMessages.length]);
+  }, [nowMessages, nowMessages.length]);
 
   return (
     <>
@@ -45,7 +51,7 @@ const Customer = ({ nowMessages, comeMessage, getMessages, users }) => {
             );
           })}
 
-          {users.map((user, index) => {
+          {userList.map((user, index) => {
             return (
               <div className="users_notice" key={index}>
                 {comeMessage === "in" && (
@@ -54,7 +60,7 @@ const Customer = ({ nowMessages, comeMessage, getMessages, users }) => {
               </div>
             );
           })}
-          {users.map((user, index) => {
+          {userList.map((user, index) => {
             return (
               <div className="users_notice" key={index}>
                 {comeMessage === "out" && (

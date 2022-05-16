@@ -11,9 +11,10 @@ const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const app = express();
 // const server = require("http").createServer(app);
-const socketio = require("socket.io");
-const http = require("http");
-const httpServer = http.createServer(app);
+//const socketio = require("socket.io");
+//const http = require("http");
+//const httpServer = http.createServer(app);
+const server = require("http").createServer(app);
 
 //env를 사용한다는 의미 dotenv
 require("dotenv").config();
@@ -71,37 +72,52 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 
 //채팅관련
-const io = new socketio.Server(httpServer, {
+const io = require("socket.io")(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
 });
 
+let userList = [];
+
 //socket
 io.on("connection", (socket) => {
+  //console.log("소켓연결");
   //채팅방 입장시 실행되는 이벤트
   socket.on("/rooms/join", (data) => {
-    console.log("/rooms/join", data);
+    console.log("채팅방 입장", data);
     const messageData = JSON.parse(data);
     const { roomNo, memberNo } = messageData;
 
-    _db
-      .qry(
-        "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
-        messageData
-      )
-      .then(() => {
-        //그 방에 집어넣는다
-        socket.join(roomNo);
-        //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
-        io.in(roomNo).emit("/rooms/join", data);
-      });
+    if (!userList.includes(memberNo)) {
+      userList.push(memberNo);
+
+      _db
+        .qry(
+          "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
+          messageData
+        )
+        .then(() => {
+          console.log("채팅 입장 보냄");
+          //그 방에 집어넣는다
+          socket.join(roomNo);
+          //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
+          io.in(roomNo).emit("/rooms/join", userList);
+        });
+
+      console.log("추가된 유저", userList);
+    }
   });
+
+  //안내메세지
+  // socket.on('/room/notice', (roomNo, memberNo, msg) => {
+  //   socket.to(memberNo).emit('/room/notice', socket.id, msg)
+  // })
 
   //채팅
   socket.on("/rooms/message", (data) => {
-    console.log("/rooms/message", data);
+    console.log("채팅받음", data);
     const { roomNo, memberNo, chat, nick } = data;
     _db
       .qry(
@@ -113,17 +129,25 @@ io.on("connection", (socket) => {
           "/rooms/message",
           JSON.stringify({ ...result, data })
         );
+        console.log("채팅보냄");
       });
   });
 
   //채팅방 나가기
   socket.on("/rooms/out", (data) => {
-    console.log("/rooms/out", data);
+    console.log("채팅방 나감", data);
     const messageData = JSON.parse(data);
     const { roomNo, memberNo } = messageData;
 
-    socket.leave(roomNo);
+    socket.leave(roomNo, memberNo);
     io.in(roomNo).emit("/rooms/out", data);
+
+    //userList에서 나간 유저 삭제
+    userList.filter((user) => user !== memberNo);
+
+    //userList client로 보냄
+    io.in(roomNo).emit("/rooms/out", userList);
+    console.log("삭제멤버 데이터", userList);
 
     _db
       .qry(
@@ -134,7 +158,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("disconnected", socket.id);
+    console.log("연결끊김", socket.id);
   });
 
   socket.on("connect_error", (err) => {
@@ -230,7 +254,7 @@ async function main() {
     return res.status(result.http_status).json(result);
   });
 }
-httpServer.listen(port, () => {
+server.listen(port, () => {
   console.log(`Listening on: http://localhost:${port}`);
 });
 

@@ -3,7 +3,6 @@ import { httpRequest } from "../../src/commons/httpRequest";
 import { useRouter } from "next/router";
 
 import useGuard from "../../src/hooks/useGuard";
-import RoomSelector from "../../src/component/RoomSelector";
 
 export default function room() {
   const route = useRouter();

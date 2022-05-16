@@ -45,7 +45,7 @@ router.get("/chat/:room_no/message", jwtDeserializer, async (req, res) => {
 });
 
 //접속한 유저 불러옴
-router.get("/chat/:room_no/users", jwtDeserializer, async (req, res) => {
+router.get("/chat/:room_no/userList", jwtDeserializer, async (req, res) => {
   const reqData = {
     room_no: req.params.room_no,
   };

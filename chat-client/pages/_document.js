@@ -4,7 +4,10 @@ class MyDocument extends Document {
   render() {
     return (
       <Html lang="ko">
-        <Head></Head>
+        <Head>
+          <meta charset="utf-8" />
+          <meta httpEquiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        </Head>
         <body>
           <Main />
           <NextScript />
