@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const Chatter = ({ nowMessages, comeMessage, getMessages, users }) => {
+const Chatter = ({ nowMessages, comeMessage, getMessages, userList }) => {
   const bottomRef = useRef();
 
   //console.log("messages", messages);
@@ -45,7 +45,7 @@ const Chatter = ({ nowMessages, comeMessage, getMessages, users }) => {
               </div>
             );
           })}
-          {users.map((user, index) => {
+          {userList.map((user, index) => {
             return (
               <div className="users_notice" key={index}>
                 {comeMessage === "in" && (
@@ -54,7 +54,7 @@ const Chatter = ({ nowMessages, comeMessage, getMessages, users }) => {
               </div>
             );
           })}
-          {users.map((user, index) => {
+          {userList.map((user, index) => {
             return (
               <div className="users_notice" key={index}>
                 {comeMessage === "out" && (
@@ -63,6 +63,7 @@ const Chatter = ({ nowMessages, comeMessage, getMessages, users }) => {
               </div>
             );
           })}
+
           {nowMessages.map((message, index) => {
             return (
               <div key={index}>

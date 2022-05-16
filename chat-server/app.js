@@ -74,8 +74,9 @@ app.use(sessionMiddleware);
 //채팅관련
 const io = require("socket.io")(server, {
   cors: {
-    origin: "*",
+    origin: ["http://localhost:3001"],
     methods: ["GET", "POST"],
+    allowEIO3: true,
   },
 });
 
@@ -85,10 +86,10 @@ let userList = [];
 io.on("connection", (socket) => {
   //console.log("소켓연결");
   //채팅방 입장시 실행되는 이벤트
-  socket.on("/rooms/join", (data) => {
-    console.log("채팅방 입장", data);
-    const messageData = JSON.parse(data);
+  socket.on("/rooms/join", async (data) => {
+    const messageData = await JSON.parse(data);
     const { roomNo, memberNo } = messageData;
+    console.log("채팅방 입장", messageData);
 
     if (!userList.includes(memberNo)) {
       userList.push(memberNo);
@@ -99,21 +100,23 @@ io.on("connection", (socket) => {
           messageData
         )
         .then(() => {
-          console.log("채팅 입장 보냄");
           //그 방에 집어넣는다
           socket.join(roomNo);
+
           //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
           io.in(roomNo).emit("/rooms/join", userList);
+          console.log("클라이언트로 보내기", roomNo, userList);
         });
 
       console.log("추가된 유저", userList);
     }
   });
 
-  //안내메세지
-  // socket.on('/room/notice', (roomNo, memberNo, msg) => {
-  //   socket.to(memberNo).emit('/room/notice', socket.id, msg)
-  // })
+  //------
+  socket.on("/rooms/a", (data) => {
+    io.emit("/rooms/a", data);
+  });
+  //------
 
   //채팅
   socket.on("/rooms/message", (data) => {
@@ -143,7 +146,8 @@ io.on("connection", (socket) => {
     io.in(roomNo).emit("/rooms/out", data);
 
     //userList에서 나간 유저 삭제
-    userList.filter((user) => user !== memberNo);
+    //const outUserList = userList.filter((user) => user !== memberNo);
+    userList = userList.filter((user) => user !== memberNo);
 
     //userList client로 보냄
     io.in(roomNo).emit("/rooms/out", userList);
