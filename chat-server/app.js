@@ -10,7 +10,7 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const app = express();
-// const server = require("http").createServer(app);
+
 //const socketio = require("socket.io");
 //const http = require("http");
 //const httpServer = http.createServer(app);
@@ -72,11 +72,11 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 
 //채팅관련
+
 const io = require("socket.io")(server, {
   cors: {
     origin: ["http://localhost:3001"],
     methods: ["GET", "POST"],
-    allowEIO3: true,
   },
 });
 
@@ -84,20 +84,24 @@ let userList = [];
 
 //socket
 io.on("connection", (socket) => {
-  //console.log("소켓연결");
+  socket.onAny(() => {
+    console.log("onAny");
+  });
+
   //채팅방 입장시 실행되는 이벤트
   socket.on("/rooms/join", async (data) => {
-    const messageData = await JSON.parse(data);
-    const { roomNo, memberNo } = messageData;
-    console.log("채팅방 입장", messageData);
+    console.log("채팅방 입장", data);
 
-    if (!userList.includes(memberNo)) {
+    //const messageData = await JSON.parse(data);
+    const { roomNo, memberNo, nick } = data;
+
+    if (!userList.includes(memberNo) && userList !== undefined) {
       userList.push(memberNo);
-
+      console.log("userList?", memberNo);
       _db
         .qry(
           "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
-          messageData
+          data
         )
         .then(() => {
           //그 방에 집어넣는다
@@ -107,21 +111,33 @@ io.on("connection", (socket) => {
           io.in(roomNo).emit("/rooms/join", userList);
           console.log("클라이언트로 보내기", roomNo, userList);
         });
-
-      console.log("추가된 유저", userList);
     }
   });
-
-  //------
-  socket.on("/rooms/a", (data) => {
-    io.emit("/rooms/a", data);
-  });
-  //------
 
   //채팅
   socket.on("/rooms/message", (data) => {
     console.log("채팅받음", data);
-    const { roomNo, memberNo, chat, nick } = data;
+    /**
+     *  const types = [
+     *   {
+     *     type: "USER_TEXT",
+     *     description: "다른 유저가 친 텍스트 채팅",
+     *   },
+     *   {
+     *     type: "SYSTEM_USER_IN",
+     *     description: "시스템 메시지: 유저가 들어옴",
+     *   },
+     *   {
+     *     type: "SYSTEM_USER_OUT",
+     *     description: "시스템 메시지: 유저가 나감",
+     *   },
+     *   {
+     *     type: "SYSTEM_USER_TYPING",
+     *     description: "시스템 메시지: 유저가 타이핑중",
+     *   },
+     * ];
+     */
+    const { roomNo, memberNo, chat, nick, type } = data;
     _db
       .qry(
         `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`,
@@ -130,23 +146,28 @@ io.on("connection", (socket) => {
       .then((result) => {
         io.in(roomNo).emit(
           "/rooms/message",
-          JSON.stringify({ ...result, data })
+          // JSON.stringify(
+          { ...result, data }
         );
         console.log("채팅보냄");
       });
   });
 
+  socket.on("/rooms/typing", (data) => {
+    console.log("타이핑", data);
+    const { roomNo, memberNo, nick } = data;
+    io.in(roomNo).emit("/rooms/typing", data);
+  });
+
   //채팅방 나가기
   socket.on("/rooms/out", (data) => {
     console.log("채팅방 나감", data);
-    const messageData = JSON.parse(data);
-    const { roomNo, memberNo } = messageData;
+    const { roomNo, memberNo, nick, type } = data;
 
     socket.leave(roomNo, memberNo);
     io.in(roomNo).emit("/rooms/out", data);
 
     //userList에서 나간 유저 삭제
-    //const outUserList = userList.filter((user) => user !== memberNo);
     userList = userList.filter((user) => user !== memberNo);
 
     //userList client로 보냄
@@ -156,7 +177,7 @@ io.on("connection", (socket) => {
     _db
       .qry(
         `DELETE FROM room_users WHERE room_no = :roomNo AND member_no = :memberNo`,
-        messageData
+        data
       )
       .then(() => {});
   });

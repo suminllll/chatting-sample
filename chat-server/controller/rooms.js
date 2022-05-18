@@ -52,11 +52,10 @@ roomCtr.getChat = async (_reqData) => {
 roomCtr.getUser = async (_reqData) => {
   let inputSql, outputSql;
   //room_no를 받아서 해당 방의 모든 채팅내용을 불러옴
-  // inputSql = `SELECT * FROM member
-  // WHERE member_no
-  // IN (SELECT member_no FROM room_users
-  // WHERE room_no = :room_no)`;
-  inputSql = `SELECT nick FROM member WHERE member_no = :member_no`;
+  inputSql = `SELECT * FROM member
+  WHERE member_no
+  IN (SELECT member_no FROM room_users
+  WHERE room_no = :room_no)`;
 
   outputSql = await _db.qry(inputSql, _reqData);
 

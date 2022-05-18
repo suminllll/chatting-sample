@@ -16,22 +16,6 @@ export default function room() {
     });
   }, []);
 
-  // useEffect(() => {
-  //   socket.on("/socket/v1/room", (stringified) => {
-  //     const data = JSON.parse(stringified);
-
-  //     if (data.type === "ROOM_CREATED" || data.type === "ROOM_REMOVED") {
-  //       fetchRooms().then((res) => {
-  //         setRooms(res.data);
-  //       });
-  //     }
-  //   });
-
-  //   return () => {
-  //     socket.disconnect();
-  //   };
-  // }, []);
-
   const handleLogout = useCallback(async () => {
     await httpRequest("POST", `/login/logout`);
     route.replace("/");
@@ -41,42 +25,6 @@ export default function room() {
   const handleRoom = (data) => {
     route.replace(`/room/${data.room_no}`);
   };
-
-  // const handleRoomName = (e) => {
-  //   setRoomName(e.target.value);
-  // };
-
-  // const handleCreateRoom = async () => {
-  //   if (roomName === "") {
-  //     alert("Please enter a room name.");
-  //     return;
-  //   }
-  //   const res = await fetchCreateRoom(roomName);
-  //   socket.emit("/socket/v1/room", JSON.stringify({ type: "ROOM_CREATED" }));
-  //   setRooms((prev) => [...prev, res.data]);
-  //   setRoomName("");
-  // };
-
-  // const handleClickJoinRoom = (roomId) => {
-  //   return async (e) => {
-  //     e.stopPropagation();
-  //     e.preventDefault();
-
-  //     await fetchJoinRoom(roomId);
-  //     router.push(`/rooms/${roomId}`);
-  //   };
-  // };
-
-  // const handleClickRemoveRoom = (roomId) => {
-  //   return async (e) => {
-  //     e.stopPropagation();
-  //     e.preventDefault();
-
-  //     await fetchRemoveRoom(roomId);
-  //     socket.emit("/socket/v1/room", JSON.stringify({ type: "ROOM_REMOVED" }));
-  //     setRooms((prev) => prev.filter((room) => room.id !== roomId));
-  //   };
-  // };
 
   return (
     <>
@@ -95,35 +43,6 @@ export default function room() {
           );
         })}
       </div>
-      {/* <div className="container">
-        <div className="left">
-          <div className="roomListBox">
-            <input
-              name="roomName"
-              value={roomName}
-              onChange={handleRoomName}
-              placeholder="room name"
-            />
-            <button onClick={handleCreateRoom}>Create Room</button>
-
-            {rooms.length === 0 && (
-              <>
-                <p>No Rooms</p>
-              </>
-            )}
-
-            {rooms.map((room) => (
-              <RoomSelector
-                key={`room_${room.id}`}
-                {...room}
-                isRemoveAvailable={room.creatorUserId === user.id}
-                onClickJoin={handleClickJoinRoom(room.id)}
-                onClickRemove={handleClickRemoveRoom(room.id)}
-              />
-            ))}
-          </div>
-        </div>
-      </div> */}
     </>
   );
 }

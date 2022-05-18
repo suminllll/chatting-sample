@@ -1,15 +1,7 @@
 import { useEffect, useRef } from "react";
 
-const Customer = ({
-  nowMessages,
-  comeMessage,
-  getMessages,
-  userList,
-  user,
-}) => {
+const Customer = ({ messages }) => {
   const bottomRef = useRef();
-
-  //console.log("messages", messages);
   //현재시간 구하기
   const now = new Date();
   const hours = now.getHours();
@@ -20,73 +12,40 @@ const Customer = ({
   //채팅 입력하면 focus가 맨 아래로 맞춰짐
   useEffect(() => {
     bottomRef.current.scrollIntoView({ scroll: "smooth" });
-  }, [nowMessages, nowMessages.length]);
+  }, [messages.length]);
 
   return (
     <>
-      <div>
-        <div>
-          {getMessages.map((message, index) => {
-            //받아온 시간 짜르기
-            const sended = message.sended;
-            const space = sended.split(" ")[1];
-            const hours = space.split(":")[0];
-            const minutes = space.split(":")[1];
-            const time = `${hours}:${minutes} ${ampm}`;
+      {messages.map((message, index) => {
+        if (message.type === "SYSTEM_USER_IN") {
+          return <div key={index}>{message.nick}가 들어왔습니다. </div>;
+        } else if (message.type === "SYSTEM_USER_OUT") {
+          return <div key={index}>{message.nick}가 나갔습니다.</div>;
+        }
 
-            return (
-              <div key={index}>
-                <div className="otherMsg">
-                  <div className="imgBox">
-                    <img alt="profileImg" src="/img/profile.jpeg" />
-                  </div>
-                  <ul className="chatWrap">
-                    <li className="profileName">{message.nick}</li>
-                    <li className="chatList">{message.chat}</li>
-                    <li className="time">{time}</li>
-                  </ul>
+        return (
+          <div key={index}>
+            <div className={message.isMyMessage ? "myMsg" : "otherMsg"}>
+              {!message.isMyMessage && (
+                <div className="imgBox">
+                  <img alt="profileImg" src="/img/profile.jpeg" />
                 </div>
-                <div />
-              </div>
-            );
-          })}
+              )}
 
-          {userList.map((user, index) => {
-            return (
-              <div className="users_notice" key={index}>
-                {comeMessage === "in" && (
-                  <div>{user.nick}님이 들어오셨습니다.</div>
+              <div style={{ flex: 1 }} />
+              <ul className="chatWrap">
+                {!message.isMyMessage && (
+                  <li className="profileName">{message.nick}</li>
                 )}
-              </div>
-            );
-          })}
-          {userList.map((user, index) => {
-            return (
-              <div className="users_notice" key={index}>
-                {comeMessage === "out" && (
-                  <div>{user.nick}님이 나가셨습니다.</div>
-                )}
-              </div>
-            );
-          })}
-
-          {nowMessages.map((message, index) => {
-            return (
-              <div key={index}>
-                <div className="myMsg">
-                  <div>
-                    <ul className="chatWrap">
-                      <li className="chatList">{message.chat}</li>
-                      <li className="time">{time}</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={bottomRef} />
-        </div>
-      </div>
+                <li className="chatList">{message.chat}</li>
+                <li className="time">{time}</li>
+              </ul>
+            </div>
+            <div />
+          </div>
+        );
+      })}
+      <div ref={bottomRef} />
     </>
   );
 };
