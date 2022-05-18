@@ -93,11 +93,11 @@ io.on("connection", (socket) => {
     console.log("채팅방 입장", data);
 
     //const messageData = await JSON.parse(data);
-    const { roomNo, memberNo, nick } = data;
+    const { roomNo, memberNo, nick, type } = data;
 
     if (!userList.includes(memberNo) && userList !== undefined) {
       userList.push(memberNo);
-      console.log("userList?", memberNo);
+
       _db
         .qry(
           "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
@@ -109,7 +109,7 @@ io.on("connection", (socket) => {
 
           //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
           io.in(roomNo).emit("/rooms/join", userList);
-          console.log("클라이언트로 보내기", roomNo, userList);
+          console.log("클라이언트로 보내기", roomNo, userList, type);
         });
     }
   });
@@ -121,7 +121,7 @@ io.on("connection", (socket) => {
      *  const types = [
      *   {
      *     type: "USER_TEXT",
-     *     description: "다른 유저가 친 텍스트 채팅",
+     *     description: "유저가 친 텍스트 채팅",
      *   },
      *   {
      *     type: "SYSTEM_USER_IN",
@@ -144,18 +144,14 @@ io.on("connection", (socket) => {
         data
       )
       .then((result) => {
-        io.in(roomNo).emit(
-          "/rooms/message",
-          // JSON.stringify(
-          { ...result, data }
-        );
+        io.in(roomNo).emit("/rooms/message", { data });
         console.log("채팅보냄");
       });
   });
 
   socket.on("/rooms/typing", (data) => {
     console.log("타이핑", data);
-    const { roomNo, memberNo, nick } = data;
+    const { roomNo, memberNo, nick, isTyping } = data;
     io.in(roomNo).emit("/rooms/typing", data);
   });
 

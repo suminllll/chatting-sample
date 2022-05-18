@@ -15,6 +15,10 @@
   color: #336600;
 }
 
+.joinUser {
+  margin-right: 10px;
+}
+
 .chatInputWrap {
   width: 100%;
   padding: 20px;
@@ -61,7 +65,10 @@ input::placeholder {
   justify-content: flex-end;
   width: 100%;
   margin-right: 20px;
-  align-items: flex-end;
+
+  /* align-items: flex-end; */
+  /* display: inline-block;
+  float: right; */
 }
 
 .imgBox {

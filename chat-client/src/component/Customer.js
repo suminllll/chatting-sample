@@ -14,6 +14,7 @@ const Customer = ({ messages }) => {
     bottomRef.current.scrollIntoView({ scroll: "smooth" });
   }, [messages.length]);
 
+  //console.log("messages", userList);
   return (
     <>
       {messages.map((message, index) => {
@@ -32,7 +33,7 @@ const Customer = ({ messages }) => {
                 </div>
               )}
 
-              <div style={{ flex: 1 }} />
+              <div />
               <ul className="chatWrap">
                 {!message.isMyMessage && (
                   <li className="profileName">{message.nick}</li>
