@@ -53,6 +53,11 @@ input::placeholder {
 
 /* customer room */
 
+.notice {
+  margin: 10px;
+  color: lightgray;
+}
+
 .otherMsg {
   display: flex;
   width: 100%;

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const Customer = ({ messages }) => {
+const Customer = ({ messages, userList, userType }) => {
   const bottomRef = useRef();
   //현재시간 구하기
   const now = new Date();
@@ -14,16 +14,12 @@ const Customer = ({ messages }) => {
     bottomRef.current.scrollIntoView({ scroll: "smooth" });
   }, [messages.length]);
 
-  //console.log("messages", userList);
+  //console.log("userList1", userType);
+  // console.log("userList2", userType.nick);
+
   return (
     <>
       {messages.map((message, index) => {
-        if (message.type === "SYSTEM_USER_IN") {
-          return <div key={index}>{message.nick}가 들어왔습니다. </div>;
-        } else if (message.type === "SYSTEM_USER_OUT") {
-          return <div key={index}>{message.nick}가 나갔습니다.</div>;
-        }
-
         return (
           <div key={index}>
             <div className={message.isMyMessage ? "myMsg" : "otherMsg"}>
@@ -32,7 +28,6 @@ const Customer = ({ messages }) => {
                   <img alt="profileImg" src="/img/profile.jpeg" />
                 </div>
               )}
-
               <div />
               <ul className="chatWrap">
                 {!message.isMyMessage && (
@@ -42,10 +37,25 @@ const Customer = ({ messages }) => {
                 <li className="time">{time}</li>
               </ul>
             </div>
-            <div />
           </div>
         );
       })}
+
+      {userType.map((types, i) => {
+        return (
+          types.type === "SYSTEM_USER_IN" && (
+            <div className="notice">{types.nick}님이 들어왔습니다.</div>
+          )
+        );
+      })}
+      {userType.map((types, i) => {
+        return (
+          types.type === "SYSTEM_USER_OUT" && (
+            <div className="notice">{types.nick}님이 나갔습니다.</div>
+          )
+        );
+      })}
+
       <div ref={bottomRef} />
     </>
   );
