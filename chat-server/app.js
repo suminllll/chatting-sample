@@ -107,9 +107,11 @@ io.on("connection", (socket) => {
           //그 방에 집어넣는다
           socket.join(roomNo);
 
-          //접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
-          io.in(roomNo).emit("/rooms/join", data);
-          console.log("클라이언트로 보내기", roomNo, userList, type);
+          // broadcast: 접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
+          socket.broadcast.in(roomNo).emit("user notice", data),
+            io.in(roomNo).emit("/rooms/join", data);
+
+          console.log("클라이언트로 보내기", data);
         });
     }
   });
@@ -151,8 +153,8 @@ io.on("connection", (socket) => {
 
   socket.on("/rooms/typing", (data) => {
     console.log("타이핑", data);
-    const { roomNo, memberNo, nick, isTyping } = data;
-    socket.broadcast.emit("/rooms/typing", data);
+
+    socket.broadcast.in(data.roomNo).emit("/rooms/typing", data);
   });
 
   //채팅방 나가기
@@ -167,7 +169,8 @@ io.on("connection", (socket) => {
     userList = userList.filter((user) => user !== memberNo);
 
     //userList client로 보냄
-    io.in(roomNo).emit("/rooms/out", data);
+    io.in(roomNo);
+    socket.broadcast.in(roomNo).emit("/rooms/out", data);
     console.log("삭제멤버 데이터", userList);
 
     _db

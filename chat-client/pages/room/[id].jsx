@@ -9,7 +9,6 @@ import Chatter from "../../src/component/Chatter.js";
 //socket에서 사용자를 불러올때
 const fetchRoomUsers = async (roomNo) => {
   const response = await httpRequest("GET", `/rooms/chat/${roomNo}/userList`);
-
   return response;
 };
 
@@ -22,7 +21,6 @@ export default function chatRoom(props) {
   const [userList, setUserList] = useState([]); //접속한 유저 리스트
   const [messages, setMessages] = useState([]); //처음 렌더링시 이전 메세지들을 모두 담음
   const [isTyping, setIsTyping] = useState(false); //지금 로그인한 사용자가 입력중인지 확인
-  const [userType, setUserType] = useState([]); //유저의 현재 상태를 알려줌
   const [typingUserList, setTypingUserList] = useState([]);
 
   const router = useRouter();
@@ -39,6 +37,7 @@ export default function chatRoom(props) {
       //채팅방 입장시 실행되는 이벤트
       console.log("connect--");
 
+      //채팅방 유저리스트를 서버에서 받아옴
       socket.emit("/rooms/join", {
         roomNo: props.roomNo,
         memberNo: user?.member_no,
@@ -49,7 +48,6 @@ export default function chatRoom(props) {
       //채팅방 유저리스트를 서버에서 받아옴
       socket.on("/rooms/join", (data) => {
         console.log("joinuser", data);
-        setUserType([data]);
 
         //접속한 유저 불러오기
         fetchRoomUsers(data.roomNo).then((response) => {
@@ -59,6 +57,19 @@ export default function chatRoom(props) {
         });
       });
 
+      //인삿말
+      socket.on("user notice", (data) => {
+        console.log("인삿말", data);
+
+        const notice = {
+          type: data.type,
+          content: `${data?.nick}님이 들어오셨습니다.`,
+        };
+
+        setMessages((message) => [...message, notice]);
+      });
+
+      //서버에서 채팅내용 받기
       socket.on("/rooms/message", (data) => {
         console.log(
           "서버에서 채팅내용 받기",
@@ -69,35 +80,27 @@ export default function chatRoom(props) {
 
         //isMyMessage: 메세지를 입력한 member_no와 받아온 데이터의 memberNo가 같고,
         //data type이 USER_TEXT 이면 true를 반환, 현재 유저라는 의미
-        const messageData = {
+        const notice = {
           ...data.data,
           isMyMessage:
             data.data.memberNo === user?.member_no &&
             data.data?.type === "USER_TEXT",
         };
 
-        setMessages((messages) => [...messages, messageData]);
-      });
-
-      socket.emit("/rooms/typing", {
-        roomNo: props.roomNo,
-        ...user,
-        isTyping,
-        type: "SYSTEM_USER_TYPING",
+        setMessages((messages) => [...messages, notice]);
       });
 
       //상대방이 타이핑 칠때
       socket.on("/rooms/typing", (data) => {
         console.log("on typing", data);
-        setUserList((typingUsers) =>
-          typingUsers.map((user) => {
-            console.log("typing in user", user);
-            if (user.member_no === data.member_no) {
-              return { ...user, isTyping: true };
-            }
-            return user;
-          })
-        );
+
+        const notice = {
+          type: "SYSTEM_USER_TYPING",
+          content: data.nick,
+          isTyping: data.isTyping,
+        };
+
+        setTypingUserList([notice]);
       });
 
       socket.on("connect_error", (err) => {
@@ -107,7 +110,13 @@ export default function chatRoom(props) {
       //채팅방 나가기
       socket.on("/rooms/out", async (data) => {
         console.log("outUser", data);
-        setUserType([data]);
+
+        const notice = {
+          type: data.type,
+          content: `${data?.nick}님이 나가셨습니다.`,
+        };
+
+        setMessages((message) => [...message, notice]);
 
         fetchRoomUsers(props.roomNo).then((response) => {
           const res = response.data;
@@ -120,22 +129,22 @@ export default function chatRoom(props) {
       });
 
       return () => {
-        //console.log("user?.member_no", user?.member_no);
         socket.emit("/rooms/out", {
           roomNo: props.roomNo,
           memberNo: user?.member_no,
           nick: user?.nick,
           type: "SYSTEM_USER_OUT",
         });
+
         socket.disconnect();
       };
     }
   }, [user]);
 
-  // useEffect(() => {
-  //  // console.log("userList in useEffect1", userList);
-  //   //console.log("userType in useEffect2", userType);
-  // }, [userList]);
+  useEffect(() => {
+    console.log("typingUserList in useEffect1", typingUserList);
+    console.log("isTyping in useEffect2", isTyping);
+  }, [isTyping]);
 
   //해당 채팅방 이름 가져오기
   useEffect(() => {
@@ -166,11 +175,24 @@ export default function chatRoom(props) {
     e.preventDefault();
     setIsTyping(true);
     setMessage(e.target.value);
+
+    socket.emit("/rooms/typing", {
+      roomNo: props.roomNo,
+      ...user,
+      isTyping,
+      type: "SYSTEM_USER_TYPING",
+    });
   };
 
   useEffect(() => {
-    if (message.length === 0) return setIsTyping(false);
-  }, [isTyping, message]);
+    if (message.length === 0) {
+      socket.emit("/rooms/typing", {
+        roomNo: props.roomNo,
+        ...user,
+        isTyping: false,
+      });
+    }
+  }, [message]);
 
   //send가 실행되고 채팅 내용이 db로 추가됨
   const handleSend = () => {
@@ -207,13 +229,12 @@ export default function chatRoom(props) {
   };
 
   // const typingUsers = useMemo(() => {
-  useEffect(() => {
-    if (isTyping && JSON.stringify(userList === user.nick))
-      //if (userList.filter((list) => list.isTyping).map((user) => user))
-      return setTypingUserList([...new Set(userList)]);
-  }, [isTyping]);
+  // useEffect(() => {
+  //   if (isTyping && JSON.stringify(userList === user.nick))
+  //     //if (userList.filter((list) => list.isTyping).map((user) => user))
+  //     return setTypingUserList([...new Set(userList)]);
+  // }, [isTyping]);
 
-  console.log("typingUserList", typingUserList);
   return (
     <>
       <div className="chatForm">
@@ -229,23 +250,18 @@ export default function chatRoom(props) {
         </div>
 
         <div className="chatWindow">
-          {room === "Customer Service" && (
-            <Customer
-              messages={messages}
-              userList={userList}
-              userType={userType}
-            />
-          )}
+          {room === "Customer Service" && <Customer messages={messages} />}
           {room === "Chatter" && <Chatter messages={messages} />}
         </div>
 
-        {isTyping &&
-          typingUserList.map((user, i) => (
-            <div
-              className="typingUsers"
-              key={i}
-            >{`${user}님이 채팅을 치는 중입니다....`}</div>
-          ))}
+        {typingUserList.map((user, i) =>
+          user.isTyping && user.type === "SYSTEM_USER_TYPING" ? (
+            <div className="typingUsers" key={i}>
+              {user.content}님이 입력중입니다.
+            </div>
+          ) : null
+        )}
+
         <div className="chatInputWrap">
           <input
             className="chatInput"
