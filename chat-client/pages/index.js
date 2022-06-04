@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { useRecoilState, useResetRecoilState } from "recoil";
+import { useCallback } from "react";
+import { useRecoilState } from "recoil";
 import { userInfo } from "../src/store/accounts";
 import { httpRequest } from "../src/commons/httpRequest";
 import { useRouter } from "next/router";

@@ -1,10 +1,9 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import Customer from "../../src/component/Customer";
 import { httpRequest } from "../../src/commons/httpRequest";
 import useGuard from "../../src/hooks/useGuard";
 import { useRouter } from "next/router";
-import Chatter from "../../src/component/Chatter.js";
+import Rooms from "../../src/component/Rooms";
 
 //socket에서 사용자를 불러올때
 const fetchRoomUsers = async (roomNo) => {
@@ -25,7 +24,7 @@ export default function chatRoom(props) {
 
   const router = useRouter();
 
-  //console.log("user", user);
+  // console.log("user", props);
 
   //socket
   useEffect(() => {
@@ -58,8 +57,8 @@ export default function chatRoom(props) {
       });
 
       //인삿말
-      socket.on("user notice", (data) => {
-        console.log("인삿말", data);
+      socket.on("in user notice", (data) => {
+        console.log("입장 인삿말", data);
 
         const notice = {
           type: data.type,
@@ -111,17 +110,23 @@ export default function chatRoom(props) {
       socket.on("/rooms/out", async (data) => {
         console.log("outUser", data);
 
+        //joined members 반영
+        fetchRoomUsers(props.roomNo).then((response) => {
+          const res = response.data;
+          setUserList([...new Set(res.map((res) => res.nick))]);
+        });
+      });
+
+      socket.on("out user notice", (data) => {
+        console.log("퇴장 인삿말", data);
+
         const notice = {
           type: data.type,
           content: `${data?.nick}님이 나가셨습니다.`,
         };
 
-        setMessages((message) => [...message, notice]);
-
-        fetchRoomUsers(props.roomNo).then((response) => {
-          const res = response.data;
-          setUserList([...new Set(res.map((res) => res.nick))]);
-        });
+        //인삿말 반영
+        setMessages((messages) => [...messages, notice]);
       });
 
       socket.on("disconnect", () => {
@@ -140,11 +145,6 @@ export default function chatRoom(props) {
       };
     }
   }, [user]);
-
-  useEffect(() => {
-    console.log("typingUserList in useEffect1", typingUserList);
-    console.log("isTyping in useEffect2", isTyping);
-  }, [isTyping]);
 
   //해당 채팅방 이름 가져오기
   useEffect(() => {
@@ -184,6 +184,7 @@ export default function chatRoom(props) {
     });
   };
 
+  //message가 없으면 서버로 isTyping false를 보내줘서 입력중 문구가 사라짐
   useEffect(() => {
     if (message.length === 0) {
       socket.emit("/rooms/typing", {
@@ -228,13 +229,6 @@ export default function chatRoom(props) {
     router.replace("/room");
   };
 
-  // const typingUsers = useMemo(() => {
-  // useEffect(() => {
-  //   if (isTyping && JSON.stringify(userList === user.nick))
-  //     //if (userList.filter((list) => list.isTyping).map((user) => user))
-  //     return setTypingUserList([...new Set(userList)]);
-  // }, [isTyping]);
-
   return (
     <>
       <div className="chatForm">
@@ -250,12 +244,11 @@ export default function chatRoom(props) {
         </div>
 
         <div className="chatWindow">
-          {room === "Customer Service" && <Customer messages={messages} />}
-          {room === "Chatter" && <Chatter messages={messages} />}
+          <Rooms messages={messages} room={room} />
         </div>
 
         {typingUserList.map((user, i) =>
-          user.isTyping && user.type === "SYSTEM_USER_TYPING" ? (
+          user.isTyping && user.type === "SYSTEM_USER_TYPING" && !undefined ? (
             <div className="typingUsers" key={i}>
               {user.content}님이 입력중입니다.
             </div>
@@ -280,9 +273,11 @@ export default function chatRoom(props) {
 }
 
 export const getServerSideProps = async (ctx) => {
+  const id = ctx.query.id;
+
   return {
     props: {
-      roomNo: ctx.query.id,
+      roomNo: id,
     },
   };
 };

@@ -40,6 +40,7 @@ app.use(cookieParser(process.env.SECURITY_COOKIE));
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cors({ origin: true, credentials: true }));
+app.use(express.static("build"));
 
 //session option
 const storeOption = {
@@ -95,7 +96,12 @@ io.on("connection", (socket) => {
     //const messageData = await JSON.parse(data);
     const { roomNo, memberNo, nick, type } = data;
 
-    if (!userList.includes(memberNo) && userList !== undefined) {
+    if (
+      !userList.includes(memberNo) &&
+      userList !== undefined &&
+      memberNo !== undefined
+    ) {
+      console.log("memberNo", memberNo);
       userList.push(memberNo);
 
       _db
@@ -108,9 +114,8 @@ io.on("connection", (socket) => {
           socket.join(roomNo);
 
           // broadcast: 접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
-          socket.broadcast.in(roomNo).emit("user notice", data),
+          socket.broadcast.in(roomNo).emit("in user notice", data),
             io.in(roomNo).emit("/rooms/join", data);
-
           console.log("클라이언트로 보내기", data);
         });
     }
@@ -145,7 +150,7 @@ io.on("connection", (socket) => {
         `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`,
         data
       )
-      .then((result) => {
+      .then(() => {
         io.in(roomNo).emit("/rooms/message", { data });
         console.log("채팅보냄");
       });
@@ -162,23 +167,25 @@ io.on("connection", (socket) => {
     console.log("채팅방 나감", data);
     const { roomNo, memberNo, nick, type } = data;
 
-    socket.leave(roomNo, memberNo);
-    io.in(roomNo).emit("/rooms/out", data);
+    if (memberNo !== undefined) {
+      socket.leave(roomNo, memberNo);
+      io.in(roomNo).emit("/rooms/out", data);
 
-    //userList에서 나간 유저 삭제
-    userList = userList.filter((user) => user !== memberNo);
+      //userList에서 나간 유저 삭제
+      userList = userList.filter((user) => user !== memberNo);
 
-    //userList client로 보냄
-    io.in(roomNo);
-    socket.broadcast.in(roomNo).emit("/rooms/out", data);
-    console.log("삭제멤버 데이터", userList);
+      //userList client로 보냄
+      socket.broadcast.in(roomNo).emit("out user notice", data);
+      io.in(roomNo).emit("/rooms/out", data);
+      console.log("삭제멤버 데이터", userList);
 
-    _db
-      .qry(
-        `DELETE FROM room_users WHERE room_no = :roomNo AND member_no = :memberNo`,
-        data
-      )
-      .then(() => {});
+      _db
+        .qry(
+          `DELETE FROM room_users WHERE room_no = :roomNo AND member_no = :memberNo`,
+          data
+        )
+        .then(() => {});
+    }
   });
 
   socket.on("disconnect", () => {
