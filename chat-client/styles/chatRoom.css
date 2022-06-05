@@ -53,11 +53,17 @@ input::placeholder {
 
 /* customer room */
 
+.notice {
+  margin: 10px;
+  color: lightgray;
+}
+
 .otherMsg {
   display: flex;
   width: 100%;
   overflow: hidden;
   flex-wrap: nowrap;
+  margin-right: 20px;
 }
 
 .myMsg {
@@ -65,10 +71,6 @@ input::placeholder {
   justify-content: flex-end;
   width: 100%;
   margin-right: 20px;
-
-  /* align-items: flex-end; */
-  /* display: inline-block;
-  float: right; */
 }
 
 .imgBox {
@@ -90,6 +92,13 @@ img {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+}
+
+.myChatWrap {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-right: 20px;
 }
 
 li {
@@ -183,6 +192,6 @@ li {
 /* 내가 보낸 채팅 */
 .chat_my_profileName {
   font-size: 15px;
-  color: lightgray;
+  color: gray;
   font-weight: bold;
 }

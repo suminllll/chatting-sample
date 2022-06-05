@@ -55,7 +55,8 @@ roomCtr.getUser = async (_reqData) => {
   inputSql = `SELECT * FROM member
   WHERE member_no
   IN (SELECT member_no FROM room_users
-  WHERE room_no = :room_no)`;
+  WHERE room_no = :room_no)
+`;
 
   outputSql = await _db.qry(inputSql, _reqData);
 

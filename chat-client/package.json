@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@babel/core": "^7.17.10",
-    "next": "12.1.5",
+    "next": "^12.1.5",
     "react": "18.0.0",
     "react-beforeunload": "^2.5.3",
     "react-cookie": "^4.1.1",
