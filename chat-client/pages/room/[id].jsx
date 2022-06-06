@@ -4,6 +4,7 @@ import { httpRequest } from "../../src/commons/httpRequest";
 import useGuard from "../../src/hooks/useGuard";
 import { useRouter } from "next/router";
 import Rooms from "../../src/component/Rooms";
+import { useBeforeunload } from "react-beforeunload";
 
 //socket에서 사용자를 불러올때
 const fetchRoomUsers = async (roomNo) => {
@@ -24,7 +25,7 @@ export default function chatRoom(props) {
 
   const router = useRouter();
 
-  // console.log("user", props);
+  useBeforeunload((e) => e.preventDefault()); //새로고침 방지
 
   //socket
   useEffect(() => {

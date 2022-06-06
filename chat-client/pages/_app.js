@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import "../styles/login.css";
 import "../styles/room.css";
 import "../styles/chatRoom.css";
+import "../styles/[id].css";
 
 function MyApp({ Component, pageProps }) {
   return (

@@ -1,4 +1,4 @@
-const morgan = require("morgan");
+//const morgan = require("morgan");
 const helmet = require("helmet");
 const cors = require("cors");
 const fs = require("fs");
@@ -10,10 +10,6 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const app = express();
-
-//const socketio = require("socket.io");
-//const http = require("http");
-//const httpServer = http.createServer(app);
 const server = require("http").createServer(app);
 
 //env를 사용한다는 의미 dotenv
@@ -38,7 +34,7 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.SECURITY_COOKIE));
 app.use(express.json());
-app.use(morgan("dev"));
+//app.use(morgan("dev"));
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.static("build"));
 
@@ -49,22 +45,22 @@ const storeOption = {
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  clearExpired: true, //만료된 세션 자동 확인 및 지우기 여부
+  //clearExpired: true, //만료된 세션 자동 확인 및 지우기 여부
   charset: "utf8mb4_bin",
-  schema: {
-    tableName: "chat_sessions",
-    columnNames: {
-      session_id: "session_id",
-      expires: "expires",
-      data: "data",
-    },
-  },
+  // schema: {
+  //   tableName: "chat_sessions",
+  //   columnNames: {
+  //     session_id: "session_id",
+  //     expires: "expires",
+  //     data: "data",
+  //   },
+  // },
 };
 
 const sessionStore = new MySQLStore(storeOption);
 const sessionMiddleware = session({
   key: process.env.SECURITY_SESSION_KEY,
-  secret: process.env.SECURITY_SESSION_SECRET,
+  //secret: process.env.SECURITY_SESSION_SECRET,
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
@@ -93,15 +89,13 @@ io.on("connection", (socket) => {
   socket.on("/rooms/join", async (data) => {
     console.log("채팅방 입장", data);
 
-    //const messageData = await JSON.parse(data);
-    const { roomNo, memberNo, nick, type } = data;
+    const { roomNo, memberNo } = data;
 
     if (
       !userList.includes(memberNo) &&
       userList !== undefined &&
       memberNo !== undefined
     ) {
-      console.log("memberNo", memberNo);
       userList.push(memberNo);
 
       _db
@@ -165,7 +159,7 @@ io.on("connection", (socket) => {
   //채팅방 나가기
   socket.on("/rooms/out", (data) => {
     console.log("채팅방 나감", data);
-    const { roomNo, memberNo, nick, type } = data;
+    const { roomNo, memberNo } = data;
 
     if (memberNo !== undefined) {
       socket.leave(roomNo, memberNo);
