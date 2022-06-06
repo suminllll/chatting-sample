@@ -1,12 +1,10 @@
-import { useCallback } from "react";
-import { useRecoilState } from "recoil";
-import { userInfo } from "../src/store/accounts";
+import { useState, useCallback } from "react";
 import { httpRequest } from "../src/commons/httpRequest";
 import { useRouter } from "next/router";
 
 const main = () => {
   const route = useRouter();
-  const [info, setInfo] = useRecoilState(userInfo);
+  const [info, setInfo] = useState("");
 
   //입력한 닉네임이 저장됨
   const handleInputNickname = (e) => {

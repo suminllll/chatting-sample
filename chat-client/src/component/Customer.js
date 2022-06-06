@@ -18,9 +18,9 @@ const Customer = ({ messages, time, NoticeMessage }) => {
             </div>
           )}
           <div />
-          <ul className={className ? "myChatWrap" : "chatWrap"}>
+          <ul className={className ? "talk_myChatWrap" : "talk_chatWrap"}>
             {!className && <li className="profileName">{nick}</li>}
-            <li className="chatList">{chat}</li>
+            <li className="talk_chatList">{chat}</li>
             <li className="time">{time}</li>
           </ul>
         </div>

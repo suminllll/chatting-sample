@@ -10,20 +10,20 @@ const Chatter = ({ messages, time, NoticeMessage }) => {
 
   const Chat = ({ key, className, nick, time, chat }) => {
     return (
-      <div key={key} className="chat_otherMsg">
+      <div key={key} className="list_msg_wrapper">
         <div className={className ? "myMsg" : "otherMsg"}>
           <div className="imgBox">
             <img alt="profileImg" src="/img/profile.jpeg" />
           </div>
           <div style={{ flex: 1 }} />
-          <ul className="chat_chatWrap">
-            <div className="chat_chatBox">
-              <li className={className ? "chat_my_profileName" : "profileName"}>
+          <ul className="list_chat_Wrapper">
+            <div className="list_chatBox">
+              <li className={className ? "list_my_profileName" : "profileName"}>
                 {nick}
               </li>
               <li className="time">{time}</li>
             </div>
-            <li className="chat_chatList">{chat}</li>
+            <li className="list_chatting">{chat}</li>
           </ul>
         </div>
       </div>

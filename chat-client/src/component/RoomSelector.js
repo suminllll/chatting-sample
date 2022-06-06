@@ -1,5 +1,5 @@
 //import styles from "./RoomSelectorBox.module.css";
-
+//방 만들기
 export default function RoomSelector(props) {
   return (
     <div className={roomSelectorBox}>
