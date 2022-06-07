@@ -115,30 +115,11 @@ io.on("connection", (socket) => {
     }
   });
 
-  //채팅
+  // 채팅 보내기
   socket.on("/rooms/message", (data) => {
     console.log("채팅받음", data);
-    /**
-     *  const types = [
-     *   {
-     *     type: "USER_TEXT",
-     *     description: "유저가 친 텍스트 채팅",
-     *   },
-     *   {
-     *     type: "SYSTEM_USER_IN",
-     *     description: "시스템 메시지: 유저가 들어옴",
-     *   },
-     *   {
-     *     type: "SYSTEM_USER_OUT",
-     *     description: "시스템 메시지: 유저가 나감",
-     *   },
-     *   {
-     *     type: "SYSTEM_USER_TYPING",
-     *     description: "시스템 메시지: 유저가 타이핑중",
-     *   },
-     * ];
-     */
-    const { roomNo, memberNo, chat, nick, type } = data;
+
+    const { roomNo } = data;
     _db
       .qry(
         `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`,
@@ -191,7 +172,7 @@ io.on("connection", (socket) => {
     socket.disconnect();
   });
 });
-//-- 채팅관련 끝
+//-- 채팅 끝
 
 app.use(
   rateLimit({

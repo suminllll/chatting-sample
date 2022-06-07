@@ -1,6 +1,5 @@
 
 .env
-webpack
 # dependencies
 /node_modules
 /.pnp

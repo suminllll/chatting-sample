@@ -86,7 +86,7 @@ export default function chatRoom(props) {
             data.data.memberNo === user?.member_no &&
             data.data?.type === "USER_TEXT",
         };
-
+        console.log("notice2", notice);
         setMessages((messages) => [...messages, notice]);
       });
 
@@ -164,13 +164,26 @@ export default function chatRoom(props) {
     new Promise(async (res, rej) => {
       const url = `/rooms/chat/${props.roomNo}/message`;
       const result = await httpRequest("GET", url);
+      const data = result.data;
 
       if (result.success) {
-        setMessages(result.data);
+        data.map((data) => {
+          console.log("in map2", data.member_no);
+          console.log("in map user");
+
+          if (data.member_no === user?.member_no) {
+            data.isMyMessage = true;
+            return data;
+          } else {
+            return data;
+          }
+        });
+        setMessages(data);
+        console.log("data", data);
       }
     });
   }, []);
-
+  console.log("user", user?.member_no);
   //채팅 입력하면 message state에 저장
   const handleMessage = (e) => {
     e.preventDefault();

@@ -10,15 +10,14 @@ const Customer = ({ messages, time, NoticeMessage }) => {
 
   const Chat = ({ key, className, nick, time, chat }) => {
     return (
-      <div key={key}>
-        <div className={className ? "myMsg" : "otherMsg"}>
-          {!className && (
-            <div className="imgBox">
-              <img alt="profileImg" src="/img/profile.jpeg" />
-            </div>
-          )}
-          <div />
-          <ul className={className ? "talk_myChatWrap" : "talk_chatWrap"}>
+      <div key={key} className={className ? "talk_myChatWrap" : "otherMsg"}>
+        {!className && (
+          <div className="imgBox">
+            <img alt="profileImg" src="/img/profile.jpeg" />
+          </div>
+        )}
+        <div className={className ? "talk_myChatWrap" : "talk_chatWrap"}>
+          <ul>
             {!className && <li className="profileName">{nick}</li>}
             <li className="talk_chatList">{chat}</li>
             <li className="time">{time}</li>
@@ -27,6 +26,7 @@ const Customer = ({ messages, time, NoticeMessage }) => {
       </div>
     );
   };
+  console.log("messages", messages.isMyMessage);
   return (
     <>
       {messages &&
