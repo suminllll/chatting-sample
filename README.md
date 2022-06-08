@@ -1,41 +1,30 @@
-* 페이지별로 폴더 만듦
-* 해당 디렉토리 들어가서 (chat-client / chat-server) 해당 start
+# 채팅 기능
 
-chat-client 
+### Technology
+- client : next.js
+- server : node.js
+- database : mariadb
 
-|--chat (x)
+### Flow
+1. 닉네임 설정 후 로그인
+    a. 사용자 식별
+        i. ‘oo님 안녕하세요.’
+        ii. 로그인 직후 쿠키에 JWT 토큰을 저장하고, DB(member table)에 유저 정보 저장
+2. 채팅방 선택 (
+    a.  Customer Service[고객지원방], Chatter[수다방]
+3. 해당 방 입장
+    a. socket.io 라이브러리를 이용한 송수신 연결
+    b. 채팅방 별로 식별하고, 채팅내용을 DB에 반영
+    c. 해당 방 별로 다른 인터페이스 화면을 구성(카톡형, 리스트형)
+    d. ‘oo님이 들어오셨습니다/ oo님이 퇴장하셨습니다’
+    e. 각 사용자별 채팅가능
+4. 채팅방 나가기
+    a. socket.io 송수신 해
+5. 로그아웃
+    a. 쿠키에서 유저 정보 삭제
 
-|-- room
+* 추후에 만들 예정인 기능
+1. 방 반들기
+2. 특정 유저에게 귓속말하기
+3. 프로필 이미지 등록/변경/삭제...
 
-||---Chatter(수다방)
-
-||---Customer(고객지원방)
-
-|||---index.js(/room/Customer)
-
-||
-
-||---index.js(/room) 로그인 후 넘어가는 채팅방 선택하는 페이지
-
-_app.js
-
-_document.js 
-
--index.js : 제일 먼저 실행되는 메인페이지(로그인)
-
-
-["start": npm run dev]
-
-
-
-chat-server
-
-|--controller
-
-|--routes
-
-app.js (공통적인 것들, 채팅관련 로직도 들어있음)
-
-
-
-["start": npm run start || nodemon add.js(변경될 때마다 자동실행)]
