@@ -1,11 +1,13 @@
-# 채팅 기능
+# 실시간 채팅 기능
+![chat full video](https://user-images.githubusercontent.com/79704928/172582674-0d8e33ff-e2a0-4099-98b6-b33b3bf0d288.gif)
 
-### Technology
+## Technology
 - client : next.js
 - server : node.js
+- communication : socket.io
 - database : mariadb
 
-### Flow
+## Flow
 1. 닉네임 설정 후 로그인
     a. 사용자 식별
         i. ‘oo님 안녕하세요.’
