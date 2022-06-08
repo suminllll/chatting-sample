@@ -1,7 +1,7 @@
 # 실시간 채팅 기능
 ![chat full video](https://user-images.githubusercontent.com/79704928/172582674-0d8e33ff-e2a0-4099-98b6-b33b3bf0d288.gif)
 
-## Technology
+## Tech
 - client : next.js
 - server : node.js
 - communication : socket.io
