@@ -1,7 +1,8 @@
 
 .env
+package-lock.json
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.js
 
@@ -9,7 +10,7 @@
 /coverage
 
 # next.js
-/.next
+.next
 /out/
 
 # production
@@ -33,3 +34,4 @@ yarn-error.log*
 
 # vercel
 .vercel
+.npm
