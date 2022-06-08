@@ -15,6 +15,7 @@
      </br>
 2. 채팅방 선택 </br>
  &nbsp;a.  Customer Service[고객지원방], Chatter[수다방]</br>
+ &nbsp;&nbsp;i. 각 채팅방별 다른 UI
     </br>
 3. 해당 방 입장</br>
  &nbsp;a. socket.io 라이브러리를 이용한 송수신 연결</br>
