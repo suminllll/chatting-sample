@@ -1,8 +1,8 @@
 .chatForm {
-  height: 100%;
-  max-height: 100vh;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  max-height: 100vh;
 }
 
 .joinWrap {
@@ -20,9 +20,11 @@
 }
 
 .chatInputWrap {
+  position: fixed;
+  bottom: 0;
+  display: flex;
   width: 100%;
   padding: 20px;
-  display: flex;
 }
 
 .chatInput {
@@ -44,9 +46,11 @@ input::placeholder {
 .chatWindow {
   flex: 1;
   overflow: auto;
+  margin-bottom: 60px;
 }
 
 .typingUsers {
   color: lightslategray;
-  margin-left: 10px;
+  margin-left: 20px;
+  /* margin-bottom: 75px; */
 }

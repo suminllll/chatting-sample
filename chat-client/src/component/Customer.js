@@ -26,7 +26,7 @@ const Customer = ({ messages, time, NoticeMessage }) => {
       </div>
     );
   };
-  console.log("messages", messages.isMyMessage);
+
   return (
     <>
       {messages &&

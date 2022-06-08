@@ -168,9 +168,6 @@ export default function chatRoom(props) {
 
       if (result.success) {
         data.map((data) => {
-          console.log("in map2", data.member_no);
-          console.log("in map user");
-
           if (data.member_no === user?.member_no) {
             data.isMyMessage = true;
             return data;
@@ -179,11 +176,10 @@ export default function chatRoom(props) {
           }
         });
         setMessages(data);
-        console.log("data", data);
       }
     });
-  }, []);
-  console.log("user", user?.member_no);
+  }, [user]);
+
   //채팅 입력하면 message state에 저장
   const handleMessage = (e) => {
     e.preventDefault();
@@ -252,7 +248,7 @@ export default function chatRoom(props) {
           <h4>{`Joined ${userList.length} Members`}</h4>
           {userList.map((user) => (
             <div className="joinUser" key={user.member_no}>
-              <p>* {user}</p>
+              <p>* {user} </p>
             </div>
           ))}
         </div>

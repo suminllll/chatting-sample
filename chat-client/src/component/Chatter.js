@@ -1,5 +1,25 @@
 import { useEffect, useRef } from "react";
 
+const Chat = ({ key, className, nick, time, chat }) => {
+  return (
+    <div key={key} className={className ? "list_myChatWrap" : "otherMsg"}>
+      <div className="imgBox">
+        <img alt="profileImg" src="/img/profile.jpeg" />
+      </div>
+      <div style={{ flex: 1 }} />
+      <ul className="list_chat_Wrapper">
+        <div className="list_chatBox">
+          <li className={className ? "list_my_profileName" : "profileName"}>
+            {nick}
+          </li>
+          <li className="time">{time}</li>
+        </div>
+        <li className="list_chatting">{chat}</li>
+      </ul>
+    </div>
+  );
+};
+
 const Chatter = ({ messages, time, NoticeMessage }) => {
   const bottomRef = useRef();
 
@@ -7,28 +27,6 @@ const Chatter = ({ messages, time, NoticeMessage }) => {
   useEffect(() => {
     bottomRef.current.scrollIntoView({ scroll: "smooth" });
   }, [messages.length]);
-
-  const Chat = ({ key, className, nick, time, chat }) => {
-    return (
-      <div key={key} className="list_msg_wrapper">
-        <div className={className ? "myMsg" : "otherMsg"}>
-          <div className="imgBox">
-            <img alt="profileImg" src="/img/profile.jpeg" />
-          </div>
-          <div style={{ flex: 1 }} />
-          <ul className="list_chat_Wrapper">
-            <div className="list_chatBox">
-              <li className={className ? "list_my_profileName" : "profileName"}>
-                {nick}
-              </li>
-              <li className="time">{time}</li>
-            </div>
-            <li className="list_chatting">{chat}</li>
-          </ul>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <>

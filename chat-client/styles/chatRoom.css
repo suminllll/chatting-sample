@@ -7,10 +7,11 @@
 /* 채팅방 공통 */
 .otherMsg {
   display: flex;
+  flex-wrap: nowrap;
   width: 100%;
   overflow: hidden;
-  flex-wrap: nowrap;
-  margin-right: 20px;
+  padding-left: 10px;
+  padding-right: 20px;
 }
 
 .imgBox {
@@ -34,6 +35,7 @@ li {
 }
 
 .profileName {
+  padding-left: 10px;
   font-size: 15px;
   color: lightgray;
 }
@@ -45,11 +47,11 @@ li {
 
 /* Customer(카톡형) */
 .talk_chatWrap {
-  margin-right: 20px;
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  margin-right: 20px;
+  width: 100%;
 }
 
 .talk_myChatWrap {
@@ -62,24 +64,27 @@ li {
 .talk_chatList {
   padding: 10px;
   border-radius: 10px;
+  width: fit-content;
   background-color: lightgray;
   color: #336600;
 }
 
 /* chatter(리스트형) */
-.list_msg_wrapper {
+.list_myChatWrap {
   display: flex;
-  width: 100%;
-  overflow: hidden;
   flex-wrap: nowrap;
+  overflow: hidden;
+  width: 100%;
+  padding-left: 10px;
+  padding-right: 20px;
 }
 
 .list_chat_Wrapper {
-  padding-left: 5px;
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  padding-left: 5px;
+  width: 100%;
 }
 
 .list_chatBox {
@@ -89,8 +94,9 @@ li {
 }
 
 .list_my_profileName {
-  font-size: 15px;
+  padding-left: 10px;
   color: gray;
+  font-size: 15px;
   font-weight: bold;
 }
 
