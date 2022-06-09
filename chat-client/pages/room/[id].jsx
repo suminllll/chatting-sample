@@ -22,6 +22,7 @@ export default function chatRoom(props) {
   const [messages, setMessages] = useState([]); //처음 렌더링시 이전 메세지들을 모두 담음
   const [isTyping, setIsTyping] = useState(false); //지금 로그인한 사용자가 입력중인지 확인
   const [typingUserList, setTypingUserList] = useState([]);
+  const [whisperUser, setWhisperUser] = useState("");
 
   const router = useRouter();
 
@@ -86,7 +87,7 @@ export default function chatRoom(props) {
             data.data.memberNo === user?.member_no &&
             data.data?.type === "USER_TEXT",
         };
-        console.log("notice2", notice);
+
         setMessages((messages) => [...messages, notice]);
       });
 
@@ -101,6 +102,19 @@ export default function chatRoom(props) {
         };
 
         setTypingUserList([notice]);
+      });
+
+      socket.on("send whisperUser", (data) => {
+        console.log("귓속말", data);
+
+        const notice = {
+          ...data.data,
+          isMyMessage:
+            data.data.memberNo === user?.member_no &&
+            data.data?.type === "SEND_WHISPER",
+        };
+
+        setMessages((messages) => [...messages, notice]);
       });
 
       socket.on("connect_error", (err) => {
@@ -185,6 +199,7 @@ export default function chatRoom(props) {
     e.preventDefault();
     setIsTyping(true);
     setMessage(e.target.value);
+    console.log("whisperUser", whisperUser);
 
     socket.emit("/rooms/typing", {
       roomNo: props.roomNo,
@@ -192,8 +207,19 @@ export default function chatRoom(props) {
       isTyping,
       type: "SYSTEM_USER_TYPING",
     });
-  };
 
+    //귓속말 서버로 보내기
+    // socket.emit("send whisper", {
+    //   roomNo: props.roomNo,
+    //   whisperUser: whisperUser,
+    //nick: user?.nick,
+    //   type: "SEND_WHISPER",
+    //   isTyping: false,
+    // });
+  };
+  useEffect(() => {
+    console.log("whisperUser2", whisperUser);
+  }, [whisperUser]);
   //message가 없으면 서버로 isTyping false를 보내줘서 입력중 문구가 사라짐
   useEffect(() => {
     if (message.length === 0) {
@@ -213,15 +239,29 @@ export default function chatRoom(props) {
         return;
       }
 
-      //메세지 서버로 보냄
-      socket.emit("/rooms/message", {
-        chat: message,
-        roomNo: props.roomNo,
-        memberNo: user?.member_no,
-        nick: user?.nick,
-        type: "USER_TEXT",
-      });
+      if (whisperUser) {
+        setIsTyping(false);
+        // 귓속말
+        socket.emit("/rooms/message", {
+          chat: message,
+          roomNo: props.roomNo,
+          memberNo: user?.member_no,
+          nick: user?.nick,
+          whisperUser: whisperUser,
+          type: "SEND_WHISPER",
+        });
 
+        setWhisperUser("");
+      } else {
+        //메세지 서버로 보냄
+        socket.emit("/rooms/message", {
+          chat: message,
+          roomNo: props.roomNo,
+          memberNo: user?.member_no,
+          nick: user?.nick,
+          type: "USER_TEXT",
+        });
+      }
       setIsTyping(false);
       setMessage("");
     }
@@ -254,7 +294,7 @@ export default function chatRoom(props) {
         </header>
 
         <div className="chatWindow">
-          <Rooms messages={messages} room={room} />
+          <Rooms messages={messages} room={room} whisperUser={whisperUser} />
         </div>
 
         {typingUserList.map((user, i) =>
@@ -266,6 +306,34 @@ export default function chatRoom(props) {
         )}
 
         <div className="chatInputWrap">
+          <button className="plusButton">➕</button>
+          <div className="plusBox">
+            <select onChange={() => setWhisperUser(this)}>
+              <option value="">귓속말</option>
+              {userList
+                .filter((me) => me !== user?.nick)
+                .map((user) => (
+                  <option key={user.member_no} value={user}>
+                    {user}
+                  </option>
+                ))}
+            </select>
+
+            <label className="imgPlusLabel" htmlFor="img">
+              앨범
+              <input
+                className="imgPlus"
+                id="img"
+                type="file"
+                accept="image/*"
+              />
+            </label>
+            <label className="filePlusLabel" htmlFor="file">
+              파일
+              <input className="filePlus" id="file" type="file" />
+            </label>
+          </div>
+
           <input
             className="chatInput"
             placeholder="Write a message.."

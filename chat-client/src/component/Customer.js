@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const Customer = ({ messages, time, NoticeMessage }) => {
+const Customer = ({ messages, time, NoticeMessage, whisperUser }) => {
   const bottomRef = useRef();
 
   //채팅 입력하면 focus가 맨 아래로 맞춰짐
@@ -8,22 +8,41 @@ const Customer = ({ messages, time, NoticeMessage }) => {
     bottomRef.current.scrollIntoView({ scroll: "smooth" });
   }, [messages.length]);
 
-  const Chat = ({ key, className, nick, time, chat }) => {
+  const Chat = ({
+    key,
+    className,
+    nick,
+    time,
+    chat,
+    isWhisper,
+    whisperUser,
+  }) => {
+    console.log("whisperUser3", whisperUser);
     return (
-      <div key={key} className={className ? "talk_myChatWrap" : "otherMsg"}>
+      <ul key={key} className={className ? "talk_myChatWrap" : "otherMsg"}>
         {!className && (
           <div className="imgBox">
             <img alt="profileImg" src="/img/profile.jpeg" />
           </div>
         )}
-        <ul className={className ? "talk_myChatWrap" : "talk_chatWrap"}>
+        <li className={className ? "talk_myChatWrap" : "talk_chatWrap"}>
           <div>
-            {!className && <li className="profileName">{nick}</li>}
-            <li className="talk_chatList">{chat}</li>
-            <li className="time">{time}</li>
+            {!className && <div className="profileName">{nick}</div>}
+            {className
+              ? "talk_myChatWrap" &&
+                isWhisper(
+                  <div className="whisperTo">`To '${whisperUser}': `</div>
+                )
+              : null}
+            {className
+              ? "talk_chatWrap" &&
+                isWhisper(<div className="whisperTo">`From '${nick}': `</div>)
+              : null}
+            <div className="talk_chatList">{chat}</div>
+            <div className="time">{time}</div>
           </div>
-        </ul>
-      </div>
+        </li>
+      </ul>
     );
   };
 
@@ -41,6 +60,8 @@ const Customer = ({ messages, time, NoticeMessage }) => {
               nick={message.nick}
               chat={message.chat}
               time={time}
+              isWhisper={message.type === "SEND WHISPER"}
+              whisperUser={whisperUser}
             />
           )
         )}

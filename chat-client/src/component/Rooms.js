@@ -1,7 +1,7 @@
 import Chatter from "./Chatter";
 import Customer from "./Customer";
 
-const Rooms = ({ messages, room }) => {
+const Rooms = ({ messages, room, whisperUser }) => {
   //현재시간 구하기
   const now = new Date();
   const hours = now.getHours();
@@ -24,6 +24,7 @@ const Rooms = ({ messages, room }) => {
           messages={messages}
           time={time}
           NoticeMessage={NoticeMessage}
+          whisperUser={whisperUser}
         />
       ) : room === "Chatter" ? (
         <Chatter
