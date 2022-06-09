@@ -16,13 +16,13 @@ const Customer = ({ messages, time, NoticeMessage }) => {
             <img alt="profileImg" src="/img/profile.jpeg" />
           </div>
         )}
-        <div className={className ? "talk_myChatWrap" : "talk_chatWrap"}>
-          <ul>
+        <ul className={className ? "talk_myChatWrap" : "talk_chatWrap"}>
+          <div>
             {!className && <li className="profileName">{nick}</li>}
             <li className="talk_chatList">{chat}</li>
             <li className="time">{time}</li>
-          </ul>
-        </div>
+          </div>
+        </ul>
       </div>
     );
   };

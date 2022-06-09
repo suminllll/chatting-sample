@@ -241,17 +241,17 @@ export default function chatRoom(props) {
 
   return (
     <>
-      <div className="chatForm">
-        <div className="joinWrap">
+      <section className="chatForm">
+        <header className="joinWrap">
           <button onClick={handleClickBack}>Out</button>
           <h4 className="roomTitle">{room}</h4>
           <h4>{`Joined ${userList.length} Members`}</h4>
           {userList.map((user) => (
-            <div className="joinUser" key={user.member_no}>
+            <li className="joinUser" key={user.member_no}>
               <p>* {user} </p>
-            </div>
+            </li>
           ))}
-        </div>
+        </header>
 
         <div className="chatWindow">
           <Rooms messages={messages} room={room} />
@@ -277,7 +277,7 @@ export default function chatRoom(props) {
             Send
           </button>
         </div>
-      </div>
+      </section>
     </>
   );
 }
