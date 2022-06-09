@@ -119,16 +119,21 @@ io.on("connection", (socket) => {
   socket.on("/rooms/message", (data) => {
     console.log("채팅받음", data);
 
-    const { roomNo } = data;
-    _db
-      .qry(
-        `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`,
-        data
-      )
-      .then(() => {
-        io.in(roomNo).emit("/rooms/message", { data });
-        console.log("채팅보냄");
-      });
+    const { roomNo, type, whisperUser } = data;
+
+    if (type) {
+      sql = `INSERT INTO chat(member_no, room_no, chat, sended, type, to) VALUES (:memberNo, :roomNo, :chat, now(), :type, :whisperUser)`;
+      return sql;
+    } else {
+      sql = `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`;
+      return sql;
+    }
+
+    _db.qry(sql, data).then(() => {
+      io.in(roomNo).emit("/rooms/message", { data });
+      io.in(roomNo).to(whisperUser).emit("send whisperUser", data);
+      console.log("채팅보냄");
+    });
   });
 
   socket.on("/rooms/typing", (data) => {
