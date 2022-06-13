@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 
 const Chat = ({ key, nick, time, chat, isMyMessage, whisperUser, type }) => {
   return (
@@ -12,7 +13,7 @@ const Chat = ({ key, nick, time, chat, isMyMessage, whisperUser, type }) => {
         <div>
           {!isMyMessage && <div className="profileName">{nick}</div>}
 
-          <div className="talk_chatList">
+          <div key={key} className="talk_chatList">
             {isMyMessage && type === "SEND_WHISPER"
               ? `${whisperUser}님에게 귓속말을 보냈습니다.
         : ${chat}`
@@ -27,8 +28,10 @@ const Chat = ({ key, nick, time, chat, isMyMessage, whisperUser, type }) => {
     </ul>
   );
 };
-
-const Customer = ({ messages, NoticeMessage, time, whisperUser }) => {
+// Chat.propTypes = {
+//   key: PropTypes.number.isRequired,
+// };
+const Customer = ({ messages, NoticeMessage, time }) => {
   const bottomRef = useRef();
 
   //채팅 입력하면 focus가 맨 아래로 맞춰짐
@@ -42,7 +45,7 @@ const Customer = ({ messages, NoticeMessage, time, whisperUser }) => {
         messages.map((message, index) =>
           message.type === "SYSTEM_USER_IN" ||
           message.type === "SYSTEM_USER_OUT" ? (
-            <NoticeMessage key={index} contents={message.content} />
+            <NoticeMessage index={index} contents={message.content} />
           ) : (
             <Chat
               key={index}
@@ -51,7 +54,7 @@ const Customer = ({ messages, NoticeMessage, time, whisperUser }) => {
               chat={message.chat}
               type={message.type}
               time={time}
-              whisperUser={whisperUser || message.whisper_user}
+              whisperUser={message.whisperUser || message.whisper_user}
             />
           )
         )}
@@ -59,4 +62,5 @@ const Customer = ({ messages, NoticeMessage, time, whisperUser }) => {
     </>
   );
 };
+
 export default Customer;
