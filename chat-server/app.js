@@ -1,4 +1,3 @@
-//const morgan = require("morgan");
 const helmet = require("helmet");
 const cors = require("cors");
 const fs = require("fs");
@@ -18,7 +17,6 @@ require("dotenv").config();
 const port = process.env.PORT || 4000;
 
 global.__base = __dirname + "/";
-global._common = require(__base + "commons/common");
 global._res = require(__base + "commons/response");
 global._db = require(__base + "commons/db");
 global._constants = require(__base + "commons/constants");
@@ -34,7 +32,6 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.SECURITY_COOKIE));
 app.use(express.json());
-//app.use(morgan("dev"));
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.static("build"));
 
@@ -45,16 +42,7 @@ const storeOption = {
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  //clearExpired: true, //만료된 세션 자동 확인 및 지우기 여부
   charset: "utf8mb4_bin",
-  // schema: {
-  //   tableName: "chat_sessions",
-  //   columnNames: {
-  //     session_id: "session_id",
-  //     expires: "expires",
-  //     data: "data",
-  //   },
-  // },
 };
 
 const sessionStore = new MySQLStore(storeOption);
@@ -87,8 +75,6 @@ io.on("connection", (socket) => {
 
   //채팅방 입장시 실행되는 이벤트
   socket.on("/rooms/join", async (data) => {
-    console.log("채팅방 입장", data);
-
     const { roomNo, memberNo } = data;
 
     if (
@@ -110,41 +96,32 @@ io.on("connection", (socket) => {
           // broadcast: 접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
           socket.broadcast.in(roomNo).emit("in user notice", data),
             io.in(roomNo).emit("/rooms/join", data);
-          console.log("클라이언트로 보내기", data);
         });
     }
   });
 
   // 채팅 보내기
   socket.on("/rooms/message", (data) => {
-    console.log("채팅받음", data);
+    const { roomNo, type, whisperUser, nick } = data;
 
-    const { roomNo, type, whisperUser } = data;
-
-    if (type) {
-      sql = `INSERT INTO chat(member_no, room_no, chat, sended, type, to) VALUES (:memberNo, :roomNo, :chat, now(), :type, :whisperUser)`;
-      return sql;
-    } else {
+    if (type === "USER_TEXT")
       sql = `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`;
-      return sql;
-    }
+    else
+      sql = `INSERT INTO chat(member_no, room_no, chat, sended, type, whisper_user) VALUES (:memberNo, :roomNo, :chat, now(), :type, :whisperUser)`;
 
     _db.qry(sql, data).then(() => {
-      io.in(roomNo).emit("/rooms/message", { data });
-      io.in(roomNo).to(whisperUser).emit("send whisperUser", data);
-      console.log("채팅보냄");
+      if (type === "USER_TEXT") io.in(roomNo).emit("/rooms/message", { data });
+      else
+        io.to(nick).to(whisperUser).in(roomNo).emit("send whisperUser", data);
     });
   });
 
   socket.on("/rooms/typing", (data) => {
-    console.log("타이핑", data);
-
     socket.broadcast.in(data.roomNo).emit("/rooms/typing", data);
   });
 
   //채팅방 나가기
   socket.on("/rooms/out", (data) => {
-    console.log("채팅방 나감", data);
     const { roomNo, memberNo } = data;
 
     if (memberNo !== undefined) {

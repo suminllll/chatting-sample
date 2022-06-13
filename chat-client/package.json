@@ -11,12 +11,15 @@
   "dependencies": {
     "@babel/core": "^7.17.10",
     "create-next-app": "^12.1.6",
+    "jquery": "^3.6.0",
     "next": "^12.1.5",
     "react": "18.0.0",
     "react-beforeunload": "^2.5.3",
     "react-cookie": "^4.1.1",
     "react-dom": "18.0.0",
     "recoil": "^0.7.2",
+    "sass": "^1.52.3",
+    "scss": "^0.2.4",
     "socket.io-client": "^4.5.0"
   },
   "devDependencies": {

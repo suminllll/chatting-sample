@@ -20,19 +20,6 @@ router.get("/:room_no", async function (req, res, next) {
   return res.status(resData.http_status).send(resData);
 });
 
-router.post("/chat", async function (req, res, next) {
-  const reqData = {
-    member_no: req.body.member_no,
-    room_type: req.body.room_type,
-    room_no: req.body.room_no,
-    chat: req.body.chat,
-  };
-
-  const resData = await roomCtr.postChat(reqData);
-
-  return res.status(resData.http_status).send(resData);
-});
-
 //모든 채팅내용 불러옴
 router.get("/chat/:room_no/message", jwtDeserializer, async (req, res) => {
   const reqData = {
