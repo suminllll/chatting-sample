@@ -170,6 +170,7 @@ export default function chatRoom(props) {
       const result = await httpRequest("GET", url);
       const data = result.data;
 
+      //이전 메세지를 불러오면서 isMyMessage 구분하기
       if (result.success) {
         data.map((data) => {
           if (data.member_no === user?.member_no) {
