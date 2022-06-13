@@ -36,8 +36,7 @@
 &nbsp; &nbsp;iiii. 귓속말 모드일때 placeholder로 현재 귓속말 모드이고, 종료 방법을 알려줌</br>
 &nbsp;&nbsp;iiiii. esc로 귓속말 모드를 종료할 수 있다</br>
 &nbsp;&nbsp;iiiiii. 귓속말 모드일땐 상대방에게 타이핑 여부를 알리지 않는다</br>
-
-    </br>
+</br>
 
 4. 채팅방 나가기</br>
    &nbsp;a. socket.io 송수신 해제</br>
