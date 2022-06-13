@@ -31,6 +31,7 @@ const Rooms = ({ messages, room, whisperUser }) => {
           messages={messages}
           time={time}
           NoticeMessage={NoticeMessage}
+          whisperUser={whisperUser}
         />
       ) : null}
     </>

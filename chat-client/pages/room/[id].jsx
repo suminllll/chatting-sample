@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { httpRequest } from "../../src/commons/httpRequest";
 import useGuard from "../../src/hooks/useGuard";
@@ -23,8 +23,11 @@ export default function chatRoom(props) {
   const [isTyping, setIsTyping] = useState(false); //지금 로그인한 사용자가 입력중인지 확인
   const [typingUserList, setTypingUserList] = useState([]);
   const [whisperUser, setWhisperUser] = useState("");
+  const [plusButton, setPlusButton] = useState(false);
+  const [plus, setPlus] = useState(false);
 
   const router = useRouter();
+  const modalRef = useRef();
 
   useBeforeunload((e) => e.preventDefault()); //새로고침 방지
 
@@ -48,8 +51,6 @@ export default function chatRoom(props) {
 
       //채팅방 유저리스트를 서버에서 받아옴
       socket.on("/rooms/join", (data) => {
-        console.log("joinuser", data);
-
         //접속한 유저 불러오기
         fetchRoomUsers(data.roomNo).then((response) => {
           let res = response.data;
@@ -60,8 +61,6 @@ export default function chatRoom(props) {
 
       //인삿말
       socket.on("in user notice", (data) => {
-        console.log("입장 인삿말", data);
-
         const notice = {
           type: data.type,
           content: `${data?.nick}님이 들어오셨습니다.`,
@@ -72,12 +71,12 @@ export default function chatRoom(props) {
 
       //서버에서 채팅내용 받기
       socket.on("/rooms/message", (data) => {
-        console.log(
-          "서버에서 채팅내용 받기",
-          data.data,
-          data.data.memberNo,
-          user?.member_no
-        );
+        // console.log(
+        //   "서버에서 채팅내용 받기",
+        //   data.data,
+        //   data.data.memberNo,
+        //   user?.member_no
+        // );
 
         //isMyMessage: 메세지를 입력한 member_no와 받아온 데이터의 memberNo가 같고,
         //data type이 USER_TEXT 이면 true를 반환, 현재 유저라는 의미
@@ -91,10 +90,19 @@ export default function chatRoom(props) {
         setMessages((messages) => [...messages, notice]);
       });
 
+      //귓속말 서버에서 받기
+      socket.on("send whisperUser", (data) => {
+        const notice = {
+          ...data,
+          isMyMessage:
+            data.memberNo === user?.member_no && data?.type === "SEND_WHISPER",
+        };
+
+        setMessages((messages) => [...messages, notice]);
+      });
+
       //상대방이 타이핑 칠때
       socket.on("/rooms/typing", (data) => {
-        console.log("on typing", data);
-
         const notice = {
           type: "SYSTEM_USER_TYPING",
           content: data.nick,
@@ -104,27 +112,12 @@ export default function chatRoom(props) {
         setTypingUserList([notice]);
       });
 
-      socket.on("send whisperUser", (data) => {
-        console.log("귓속말", data);
-
-        const notice = {
-          ...data.data,
-          isMyMessage:
-            data.data.memberNo === user?.member_no &&
-            data.data?.type === "SEND_WHISPER",
-        };
-
-        setMessages((messages) => [...messages, notice]);
-      });
-
       socket.on("connect_error", (err) => {
         console.log("err", err);
       });
 
       //채팅방 나가기
       socket.on("/rooms/out", async (data) => {
-        console.log("outUser", data);
-
         //joined members 반영
         fetchRoomUsers(props.roomNo).then((response) => {
           const res = response.data;
@@ -133,8 +126,6 @@ export default function chatRoom(props) {
       });
 
       socket.on("out user notice", (data) => {
-        console.log("퇴장 인삿말", data);
-
         const notice = {
           type: data.type,
           content: `${data?.nick}님이 나가셨습니다.`,
@@ -199,7 +190,6 @@ export default function chatRoom(props) {
     e.preventDefault();
     setIsTyping(true);
     setMessage(e.target.value);
-    console.log("whisperUser", whisperUser);
 
     socket.emit("/rooms/typing", {
       roomNo: props.roomNo,
@@ -207,19 +197,8 @@ export default function chatRoom(props) {
       isTyping,
       type: "SYSTEM_USER_TYPING",
     });
-
-    //귓속말 서버로 보내기
-    // socket.emit("send whisper", {
-    //   roomNo: props.roomNo,
-    //   whisperUser: whisperUser,
-    //nick: user?.nick,
-    //   type: "SEND_WHISPER",
-    //   isTyping: false,
-    // });
   };
-  useEffect(() => {
-    console.log("whisperUser2", whisperUser);
-  }, [whisperUser]);
+
   //message가 없으면 서버로 isTyping false를 보내줘서 입력중 문구가 사라짐
   useEffect(() => {
     if (message.length === 0) {
@@ -240,18 +219,14 @@ export default function chatRoom(props) {
       }
 
       if (whisperUser) {
-        setIsTyping(false);
-        // 귓속말
         socket.emit("/rooms/message", {
           chat: message,
           roomNo: props.roomNo,
           memberNo: user?.member_no,
           nick: user?.nick,
-          whisperUser: whisperUser,
           type: "SEND_WHISPER",
+          whisperUser: whisperUser,
         });
-
-        setWhisperUser("");
       } else {
         //메세지 서버로 보냄
         socket.emit("/rooms/message", {
@@ -272,6 +247,9 @@ export default function chatRoom(props) {
     if (e.key === "Enter") {
       handleSend();
     }
+    if (e.key === "Escape") {
+      setWhisperUser("");
+    }
   };
 
   //out 버튼 누르면 실행되는 함수
@@ -279,9 +257,26 @@ export default function chatRoom(props) {
     router.replace("/room");
   };
 
+  //귓속말할 user
+  const handleWhisper = (e) => {
+    setWhisperUser(e.target.value);
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handlePlusBox);
+    return () => {
+      document.removeEventListener("mousedown", handlePlusBox);
+    };
+  }, [plusButton]);
+
+  const handlePlusBox = (e) => {
+    if (plusButton && !modalRef.current.contains(e.target))
+      setPlusButton(false);
+  };
+
   return (
-    <>
-      <section className="chatForm">
+    <section className="chatSection">
+      <div className="chatForm">
         <header className="joinWrap">
           <button onClick={handleClickBack}>Out</button>
           <h4 className="roomTitle">{room}</h4>
@@ -306,37 +301,57 @@ export default function chatRoom(props) {
         )}
 
         <div className="chatInputWrap">
-          <button className="plusButton">➕</button>
-          <div className="plusBox">
-            <select onChange={() => setWhisperUser(this)}>
-              <option value="">귓속말</option>
-              {userList
-                .filter((me) => me !== user?.nick)
-                .map((user) => (
-                  <option key={user.member_no} value={user}>
-                    {user}
-                  </option>
-                ))}
-            </select>
-
-            <label className="imgPlusLabel" htmlFor="img">
-              앨범
-              <input
-                className="imgPlus"
-                id="img"
-                type="file"
-                accept="image/*"
-              />
-            </label>
-            <label className="filePlusLabel" htmlFor="file">
-              파일
-              <input className="filePlus" id="file" type="file" />
-            </label>
-          </div>
+          <button
+            className="plusButton"
+            onClick={() => {
+              setPlusButton(!plusButton);
+            }}
+          >
+            ➕
+          </button>
+          {plusButton && (
+            <div className="plusBox" ref={modalRef}>
+              <ul>
+                <li>
+                  <select onChange={handleWhisper}>
+                    <option value="">귓속말</option>
+                    {userList
+                      .filter((me) => me !== user?.nick)
+                      .map((user) => (
+                        <option key={user.member_no} value={user}>
+                          {user}
+                        </option>
+                      ))}
+                  </select>
+                </li>
+                <li>
+                  <label className="imgPlusLabel">
+                    앨범
+                    <input
+                      className="imgPlus"
+                      id="img"
+                      type="file"
+                      accept="image/*"
+                    />
+                  </label>
+                </li>
+                <li>
+                  <label className="filePlusLabel">
+                    파일
+                    <input className="filePlus" id="file" type="file" />
+                  </label>
+                </li>
+              </ul>
+            </div>
+          )}
 
           <input
             className="chatInput"
-            placeholder="Write a message.."
+            placeholder={
+              whisperUser
+                ? `${whisperUser}님에게 귓속말: * 귓속말 종료시 esc를 누르세요.`
+                : "Write a message.."
+            }
             onChange={handleMessage}
             onKeyUp={handleEnterOnMessage}
             value={message}
@@ -345,8 +360,8 @@ export default function chatRoom(props) {
             Send
           </button>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
 

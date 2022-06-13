@@ -1,5 +1,14 @@
+.chatSection {
+  position: relative;
+  // top: 0;
+  // bottom: 0;
+}
+
 .chatForm {
   height: 100vh;
+  // position: absolute;
+  // top: 0;
+  // bottom: 0;
 }
 
 .joinWrap {
@@ -27,24 +36,41 @@
 .plusButton {
   font-size: 20px;
   margin-right: 8px;
+  margin-bottom: 5px;
   padding: 2px 6px 0 4px;
-  height: 40%;
+  height: 40px;
 }
 
 .plusBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1px solid lightgray;
-  width: 150px;
-  height: 90px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
+  position: relative;
+  left: 0;
+  top: 0;
 
-select {
-  border-style: none;
-  cursor: pointer;
+  select {
+    border-style: none;
+    cursor: pointer;
+  }
+
+  ul {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 150px;
+    padding-left: 0;
+    margin-bottom: 0;
+    background-color: white;
+    border: 1px solid #336600;
+  }
+
+  li {
+    padding: 10px 0;
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+  }
 }
 
 .imgPlusLabel,
@@ -62,10 +88,10 @@ select {
 .chatInput {
   width: 100%;
   height: 50px;
-}
 
-input::placeholder {
-  padding-left: 10px;
+  input::placeholder {
+    padding-left: 10px;
+  }
 }
 
 .sendButton {
@@ -73,12 +99,6 @@ input::placeholder {
   height: 50px;
   width: 80px;
   margin-left: 10px;
-}
-
-button {
-  border-style: none;
-  box-shadow: 1px 1px lightgray;
-  border-radius: 3px;
 }
 
 .chatWindow {
