@@ -24,7 +24,6 @@ export default function chatRoom(props) {
   const [typingUserList, setTypingUserList] = useState([]);
   const [whisperUser, setWhisperUser] = useState("");
   const [plusButton, setPlusButton] = useState(false);
-  const [plus, setPlus] = useState(false);
 
   const router = useRouter();
   const modalRef = useRef();
@@ -191,15 +190,17 @@ export default function chatRoom(props) {
     setIsTyping(true);
     setMessage(e.target.value);
 
-    socket.emit("/rooms/typing", {
-      roomNo: props.roomNo,
-      ...user,
-      isTyping,
-      type: "SYSTEM_USER_TYPING",
-    });
+    if (!whisperUser) {
+      socket.emit("/rooms/typing", {
+        roomNo: props.roomNo,
+        ...user,
+        isTyping,
+        type: "SYSTEM_USER_TYPING",
+      });
+    }
   };
 
-  //message가 없으면 서버로 isTyping false를 보내줘서 입력중 문구가 사라짐
+  //typing message가 없으면 서버로 isTyping false를 보내줘서 입력중 문구가 사라짐
   useEffect(() => {
     if (message.length === 0) {
       socket.emit("/rooms/typing", {
@@ -281,8 +282,8 @@ export default function chatRoom(props) {
           <button onClick={handleClickBack}>Out</button>
           <h4 className="roomTitle">{room}</h4>
           <h4>{`Joined ${userList.length} Members`}</h4>
-          {userList.map((user) => (
-            <li className="joinUser" key={user.member_no}>
+          {userList.map((user, i) => (
+            <li className="joinUser" key={i}>
               <p>* {user} </p>
             </li>
           ))}
@@ -317,8 +318,8 @@ export default function chatRoom(props) {
                     <option value="">귓속말</option>
                     {userList
                       .filter((me) => me !== user?.nick)
-                      .map((user) => (
-                        <option key={user.member_no} value={user}>
+                      .map((user, i) => (
+                        <option key={i} value={user}>
                           {user}
                         </option>
                       ))}
