@@ -3,7 +3,7 @@
 
 ## Tech
 - client : next.js
-- server : node.js
+- server : express
 - communication : socket.io
 - database : mariadb
 
