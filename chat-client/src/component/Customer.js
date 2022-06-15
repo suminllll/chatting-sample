@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
-import PropTypes from "prop-types";
 
-const Chat = ({ key, nick, time, chat, isMyMessage, whisperUser, type }) => {
+const Chat = ({ nick, time, chat, isMyMessage, whisperUser, type }) => {
   return (
-    <ul key={key} className={isMyMessage ? "talk_myChatWrap" : "otherMsg"}>
+    <ul className={isMyMessage ? "talk_myChatWrap" : "otherMsg"}>
       {!isMyMessage && (
         <div className="imgBox">
           <img alt="profileImg" src="/img/profile.jpeg" />
@@ -13,7 +12,7 @@ const Chat = ({ key, nick, time, chat, isMyMessage, whisperUser, type }) => {
         <div>
           {!isMyMessage && <div className="profileName">{nick}</div>}
 
-          <div key={key} className="talk_chatList">
+          <div className="talk_chatList">
             {isMyMessage && type === "SEND_WHISPER"
               ? `${whisperUser}님에게 귓속말을 보냈습니다.
         : ${chat}`
@@ -28,9 +27,7 @@ const Chat = ({ key, nick, time, chat, isMyMessage, whisperUser, type }) => {
     </ul>
   );
 };
-// Chat.propTypes = {
-//   key: PropTypes.number.isRequired,
-// };
+
 const Customer = ({ messages, NoticeMessage, time }) => {
   const bottomRef = useRef();
 

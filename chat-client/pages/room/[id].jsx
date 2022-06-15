@@ -5,6 +5,7 @@ import useGuard from "../../src/hooks/useGuard";
 import { useRouter } from "next/router";
 import Rooms from "../../src/component/Rooms";
 import { useBeforeunload } from "react-beforeunload";
+import instance from "socketio-file-upload";
 
 //socket에서 사용자를 불러올때
 const fetchRoomUsers = async (roomNo) => {
@@ -24,6 +25,7 @@ export default function chatRoom(props) {
   const [typingUserList, setTypingUserList] = useState([]);
   const [whisperUser, setWhisperUser] = useState("");
   const [plusButton, setPlusButton] = useState(false);
+  const [toUser, setToUser] = useState([]);
 
   const router = useRouter();
   const modalRef = useRef();
@@ -54,6 +56,11 @@ export default function chatRoom(props) {
         fetchRoomUsers(data.roomNo).then((response) => {
           let res = response.data;
 
+          setToUser(
+            res
+              .filter((res) => res.member_no !== user?.member_no)
+              .map((res) => res.member_no)
+          );
           setUserList([...new Set(res.map((res) => res.nick))]);
         });
       });
@@ -100,6 +107,18 @@ export default function chatRoom(props) {
         setMessages((messages) => [...messages, notice]);
       });
 
+      //사진 서버에서 받기
+      socket.on("send imgFile", (data) => {
+        console.log("img", data);
+
+        const notice = {
+          ...data,
+          isMyMessage:
+            data.memberNo === user?.member_no && data?.type === "SEND_IMG_FILE",
+        };
+
+        setMessages((messages) => [...messages, notice]);
+      });
       //상대방이 타이핑 칠때
       socket.on("/rooms/typing", (data) => {
         const notice = {
@@ -166,7 +185,7 @@ export default function chatRoom(props) {
   //해당 방의 모든 메세지 불러오기
   useEffect(() => {
     new Promise(async (res, rej) => {
-      const url = `/rooms/chat/${props.roomNo}/message`;
+      const url = `/rooms/chat/${props.roomNo}/${user?.member_no}/message`;
       const result = await httpRequest("GET", url);
       const data = result.data;
 
@@ -226,8 +245,8 @@ export default function chatRoom(props) {
           roomNo: props.roomNo,
           memberNo: user?.member_no,
           nick: user?.nick,
-          type: "SEND_WHISPER",
           whisperUser: whisperUser,
+          type: "SEND_WHISPER",
         });
       } else {
         //메세지 서버로 보냄
@@ -236,6 +255,7 @@ export default function chatRoom(props) {
           roomNo: props.roomNo,
           memberNo: user?.member_no,
           nick: user?.nick,
+          toUser: toUser,
           type: "USER_TEXT",
         });
       }
@@ -274,6 +294,30 @@ export default function chatRoom(props) {
   const handlePlusBox = (e) => {
     if (plusButton && !modalRef.current.contains(e.target))
       setPlusButton(false);
+  };
+
+  const handleSaveImg = (e) => {
+    console.log("imge", e.target.value);
+    setIsTyping(true);
+    const reader = new FileReader();
+    let file = e.target.files[0];
+    // <img scr={reader.result} />,
+    reader.onloadend = () => ({
+      file: file,
+      previewURL: reader.result,
+    });
+    reader.readAsDataURL(file);
+
+    console.log("reader", reader);
+
+    socket.emit("send imgFile", {
+      imgFile: e.target.value,
+      roomNo: props.roomNo,
+      memberNo: user?.member_no,
+      nick: user?.nick,
+      toUser: toUser,
+      type: "SEND_IMG_FILE",
+    });
   };
 
   return (
@@ -334,6 +378,7 @@ export default function chatRoom(props) {
                       id="img"
                       type="file"
                       accept="image/*"
+                      onChange={handleSaveImg}
                     />
                   </label>
                 </li>

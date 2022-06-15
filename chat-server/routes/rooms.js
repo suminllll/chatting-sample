@@ -21,15 +21,20 @@ router.get("/:room_no", async function (req, res, next) {
 });
 
 //모든 채팅내용 불러옴
-router.get("/chat/:room_no/message", jwtDeserializer, async (req, res) => {
-  const reqData = {
-    room_no: req.params.room_no,
-  };
+router.get(
+  "/chat/:room_no/:member_no/message",
+  jwtDeserializer,
+  async (req, res) => {
+    const reqData = {
+      room_no: req.params.room_no,
+      member_no: req.params.member_no,
+    };
 
-  const resData = await roomCtr.getChat(reqData);
+    const resData = await roomCtr.getChat(reqData);
 
-  return res.status(resData.http_status).send(resData);
-});
+    return res.status(resData.http_status).send(resData);
+  }
+);
 
 //접속한 유저 불러옴
 router.get("/chat/:room_no/userList", jwtDeserializer, async (req, res) => {

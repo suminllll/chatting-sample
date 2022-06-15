@@ -23,7 +23,8 @@
     "mysql2": "^2.3.3",
     "next-auth": "^4.3.3",
     "pug": "2.0.0-beta11",
-    "socket.io": "^4.4.1"
+    "socket.io": "^4.4.1",
+    "socketio-file-upload": "^0.7.3"
   },
   "devDependencies": {
     "webpack": "^5.72.1",

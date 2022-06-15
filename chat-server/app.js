@@ -10,6 +10,8 @@ const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const app = express();
 const server = require("http").createServer(app);
+const siofu = require("socketio-file-upload");
+const SocketIOFileUpload = require("socketio-file-upload");
 
 //env를 사용한다는 의미 dotenv
 require("dotenv").config();
@@ -34,6 +36,7 @@ app.use(cookieParser(process.env.SECURITY_COOKIE));
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.static("build"));
+app.use(siofu.router);
 
 //session option
 const storeOption = {
@@ -105,17 +108,35 @@ io.on("connection", (socket) => {
     const { roomNo, type, whisperUser, nick } = data;
 
     if (type === "USER_TEXT")
-      sql = `INSERT INTO chat(member_no, room_no, chat, sended) VALUES (:memberNo, :roomNo, :chat, now())`;
-    else
-      sql = `INSERT INTO chat(member_no, room_no, chat, sended, type, whisper_user) VALUES (:memberNo, :roomNo, :chat, now(), :type, :whisperUser)`;
+      sql = `INSERT INTO chat(member_no, room_no, chat, sended, to_user) VALUES (:memberNo, :roomNo, :chat, now(), :toUser)`;
+    if (type === "SEND_WHISPER")
+      sql = `INSERT INTO chat(member_no, room_no, chat, sended, type, whisper_user, whisper_member_no) 
+      VALUES (:memberNo, :roomNo, :chat, now(), :type, :whisperUser,
+      (SELECT member_no FROM chat.member WHERE member.nick = :whisperUser))`;
 
     _db.qry(sql, data).then(() => {
       if (type === "USER_TEXT") io.in(roomNo).emit("/rooms/message", { data });
-      else
+      if (type === "SEND_WHISPER")
         io.to(nick).to(whisperUser).in(roomNo).emit("send whisperUser", data);
     });
   });
 
+  //앨범 전송
+  socket.on("send imgFile", (data) => {
+    console.log("imgFile", data);
+    const { roomNo } = data;
+    const uploader = new siofu();
+    uploader.dir = "/path/to/save/uploads";
+
+    console.log("img", uploader);
+    // const sql = ``;
+
+    // _db.qry(sql, data).then(() => {
+    io.in(roomNo).emit("send imgFile", data);
+    //});
+  });
+
+  // 타이핑
   socket.on("/rooms/typing", (data) => {
     socket.broadcast.in(data.roomNo).emit("/rooms/typing", data);
   });

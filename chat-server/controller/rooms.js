@@ -25,11 +25,11 @@ roomCtr.getRoom = async (_reqData) => {
 roomCtr.getChat = async (_reqData) => {
   let inputSql, outputSql;
   //room_no를 받아서 해당 방의 모든 채팅내용을 불러옴
-  inputSql = `SELECT member.nick, chat.chat.*, chat.sended, chat.whisper_user
-  FROM chat 
-  LEFT JOIN member ON  chat.member_no = member.member_no
-  JOIN room_users ON chat.member_no = room_users.member_no
-  WHERE chat.room_no = :room_no`;
+  inputSql = `SELECT member.nick, chat.chat.* FROM chat.chat 
+  LEFT JOIN chat.member ON chat.member_no = member.member_no
+  WHERE chat.whisper_member_no = :member_no
+  OR chat.member_no = :member_no
+  AND room_no = :room_no`;
 
   outputSql = await _db.qry(inputSql, _reqData);
 

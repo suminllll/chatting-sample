@@ -23,14 +23,14 @@ router.post("/add", jwtSerializer, async function (req, res, next) {
 
   // nick 갔다가 찾아야 하는데 만약에 있으면 아래를 실행하지 않아야 한다.
   const getMemberFromNick = await loginCtr.getLogin(reqData);
-  console.log("getMemberFromNick", getMemberFromNick);
+
   if (getMemberFromNick.data.length > 0) {
     return res.status(getMemberFromNick.http_status).send(getMemberFromNick);
   }
 
   // nick이 없으면 실행
   const resData = await loginCtr.addLogin(reqData);
-  console.log("resData", resData);
+
   return res.status(resData.http_status).send(resData);
 });
 
