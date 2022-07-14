@@ -27,7 +27,8 @@ const Chat = ({ nick, time, chat, isMyMessage, whisperUser, type }) => {
     </ul>
   );
 };
-
+// ) : type === "SEND_IMG_FILE" ? (
+//   <img src={previewUrl} className="img_file" />
 const Customer = ({ messages, NoticeMessage, time }) => {
   const bottomRef = useRef();
 
@@ -36,6 +37,7 @@ const Customer = ({ messages, NoticeMessage, time }) => {
     bottomRef.current.scrollIntoView({ scroll: "smooth" });
   }, [messages.length]);
 
+  // console.log("messages", messages);
   return (
     <>
       {messages &&

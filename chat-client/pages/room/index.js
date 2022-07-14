@@ -12,6 +12,7 @@ export default function room() {
 
   useEffect(() => {
     httpRequest("GET", `/rooms`).then((res) => {
+      console.log("room", res);
       setRooms(res.data);
     });
   }, []);

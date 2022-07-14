@@ -9,8 +9,9 @@ export default function useGuard() {
 
   //로그인 정보를 가져와서 정보가 없으면 로그인 화면으로 전환(토큰도 함께 검사)
   useEffect(() => {
-    httpRequest("GET", "/login/info")
+    httpRequest("GET", "/login")
       .then((res) => {
+        console.log(res.data);
         setUser(res.data[0]);
       })
       .catch((e) => {

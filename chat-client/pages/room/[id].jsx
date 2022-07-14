@@ -1,11 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
 import { httpRequest } from "../../src/commons/httpRequest";
 import useGuard from "../../src/hooks/useGuard";
 import { useRouter } from "next/router";
 import Rooms from "../../src/component/Rooms";
 import { useBeforeunload } from "react-beforeunload";
-import instance from "socketio-file-upload";
 
 //socket에서 사용자를 불러올때
 const fetchRoomUsers = async (roomNo) => {
@@ -26,6 +25,10 @@ export default function chatRoom(props) {
   const [whisperUser, setWhisperUser] = useState("");
   const [plusButton, setPlusButton] = useState(false);
   const [toUser, setToUser] = useState([]);
+  const [image, setImage] = useState({
+    file: "",
+    previewUrl: null,
+  });
 
   const router = useRouter();
   const modalRef = useRef();
@@ -109,7 +112,7 @@ export default function chatRoom(props) {
 
       //사진 서버에서 받기
       socket.on("send imgFile", (data) => {
-        console.log("img", data);
+        console.log("send imgFile", data);
 
         const notice = {
           ...data,
@@ -296,28 +299,82 @@ export default function chatRoom(props) {
       setPlusButton(false);
   };
 
-  const handleSaveImg = (e) => {
-    console.log("imge", e.target.value);
-    setIsTyping(true);
+  // useEffect(() => {
+  //   console.log("useEffect", formData);
+  // }, [formData]);
+
+  const handleImgPreview = (e) => {
     const reader = new FileReader();
-    let file = e.target.files[0];
-    // <img scr={reader.result} />,
-    reader.onloadend = () => ({
-      file: file,
-      previewURL: reader.result,
-    });
+    const file = e.target.files[0];
+    const maxSize = 200 * 200;
+    const req = new XMLHttpRequest();
+
+    req.onreadystatechange = function () {
+      // 요청에 대한 콜백
+      if (req.readyState === req.DONE) {
+        // 요청이 완료되면
+        if (req.status === 200 || req.status === 201) {
+          console.log(req.responseText);
+        } else {
+          console.error(req.responseText);
+        }
+      }
+    };
+
+    // ((imgEL.style.backgroundImage = `url(${reader.result})`)),
     reader.readAsDataURL(file);
 
-    console.log("reader", reader);
+    reader.onload = () => {
+      const byteString = Buffer.from(reader.result.split(",")[1], "base64"); // Uint8Array로 리턴
+      const blob = new Blob([byteString], {
+        type: "image/jpeg",
+      });
+
+      const fileBlob = new File([blob], file.name, { type: "image/jpeg" });
+      //console.log("fileBlob", file);
+
+      setImage({
+        file: fileBlob,
+        previewUrl: reader.result,
+      });
+    };
+
+    const formData = new FormData();
+    formData.append("img", image.file);
+    console.log("image.file", image.file);
+
+    console.log("formData", formData.values());
 
     socket.emit("send imgFile", {
-      imgFile: e.target.value,
+      imgFile: formData,
       roomNo: props.roomNo,
       memberNo: user?.member_no,
       nick: user?.nick,
       toUser: toUser,
       type: "SEND_IMG_FILE",
     });
+    //  };
+    //   const formData = new FormData();
+    //   formData.append("file", imageFile);
+    //   console.log("imageFile2", formData);
+    //   console.log("imageFile3", imageFile);
+
+    //   socket.emit("send imgFile", {
+    //     imgFile: formData,
+    //     roomNo: props.roomNo,
+    //     memberNo: user?.member_no,
+    //     nick: user?.nick,
+    //     toUser: toUser,
+    //     type: "SEND_IMG_FILE",
+    //   });
+    // }
+
+    // setImage({
+    //   imageFile: "",
+    //   previewUrl: "",
+    // });
+
+    // const imgEL = document.querySelector(".img_file");
   };
 
   return (
@@ -376,22 +433,34 @@ export default function chatRoom(props) {
                     <input
                       className="imgPlus"
                       id="img"
+                      name="img"
                       type="file"
                       accept="image/*"
-                      onChange={handleSaveImg}
+                      onChange={handleImgPreview}
                     />
                   </label>
                 </li>
                 <li>
                   <label className="filePlusLabel">
                     파일
-                    <input className="filePlus" id="file" type="file" />
+                    <input
+                      className="filePlus"
+                      id="file"
+                      name="file"
+                      type="file"
+                    />
                   </label>
                 </li>
               </ul>
             </div>
           )}
-
+          {image && (
+            <img
+              src={image.previewUrl}
+              className="img_file"
+              style={{ width: "300px" }}
+            />
+          )}
           <input
             className="chatInput"
             placeholder={

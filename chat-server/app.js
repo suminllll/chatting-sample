@@ -1,4 +1,3 @@
-const helmet = require("helmet");
 const cors = require("cors");
 const fs = require("fs");
 const express = require("express");
@@ -6,12 +5,14 @@ const mysql = require("mysql2/promise");
 const session = require("express-session");
 const MySQLStore = require("express-mysql-session")(session);
 const cookieParser = require("cookie-parser");
-const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const app = express();
 const server = require("http").createServer(app);
-const siofu = require("socketio-file-upload");
-const SocketIOFileUpload = require("socketio-file-upload");
+const multer = require("multer");
+const path = require("path");
+
+const sockets = require("./chat/socket");
+const { jwtSerializer } = require("./commons/jwt");
 
 //env를 사용한다는 의미 dotenv
 require("dotenv").config();
@@ -23,20 +24,26 @@ global._res = require(__base + "commons/response");
 global._db = require(__base + "commons/db");
 global._constants = require(__base + "commons/constants");
 
-// 보안을 위해 사용
-//helmet library contentSecurityPolicy빼고 다 true
-app.use(
-  helmet({
-    contentSecurityPolicy: false, // cross-site 허용
-  })
-);
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      console.log("req", req);
+      cb(null, "uploads/"); //파일 올리면 저장할 폴더 위치
+    },
+    filename: function (req, file, cb) {
+      cb(null, new Date().valueOf() + path.extname(file.originalname)); //저장할때 파일 이름
+    },
+    limits: {
+      fileSize: 200 * 1024 * 1024, // 200 mb
+    },
+  }),
+});
 
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.SECURITY_COOKIE));
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.static("build"));
-app.use(siofu.router);
 
 //session option
 const storeOption = {
@@ -45,22 +52,40 @@ const storeOption = {
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
+  clearExpired: true,
   charset: "utf8mb4_bin",
+  schema: {
+    tableName: "sessions",
+    columnNames: {
+      session_id: "session_id",
+      expires: "expires",
+      data: "data",
+    },
+  },
 };
 
+// const serverCookie = {
+//   path: "/",
+//   httpOnly: true,
+//   signed: true,
+//   maxAge: 1000 * 60,
+// };
 const sessionStore = new MySQLStore(storeOption);
+
 const sessionMiddleware = session({
   key: process.env.SECURITY_SESSION_KEY,
-  //secret: process.env.SECURITY_SESSION_SECRET,
+  secret: process.env.SECURITY_SESSION_SECRET,
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60,
+  },
 });
 
 app.use(sessionMiddleware);
 
-//채팅관련
-
+//채팅
 const io = require("socket.io")(server, {
   cors: {
     origin: ["http://localhost:3001"],
@@ -68,126 +93,7 @@ const io = require("socket.io")(server, {
   },
 });
 
-let userList = [];
-
-//socket
-io.on("connection", (socket) => {
-  socket.onAny(() => {
-    console.log("onAny");
-  });
-
-  //채팅방 입장시 실행되는 이벤트
-  socket.on("/rooms/join", async (data) => {
-    const { roomNo, memberNo } = data;
-
-    if (
-      !userList.includes(memberNo) &&
-      userList !== undefined &&
-      memberNo !== undefined
-    ) {
-      userList.push(memberNo);
-
-      _db
-        .qry(
-          "INSERT INTO room_users (room_no, member_no) VALUES (:roomNo, :memberNo)",
-          data
-        )
-        .then(() => {
-          //그 방에 집어넣는다
-          socket.join(roomNo);
-
-          // broadcast: 접속한 클라이언트가 들어가있는 방에 있는 사람에게만 데이터를 보내준다
-          socket.broadcast.in(roomNo).emit("in user notice", data),
-            io.in(roomNo).emit("/rooms/join", data);
-        });
-    }
-  });
-
-  // 채팅 보내기
-  socket.on("/rooms/message", (data) => {
-    const { roomNo, type, whisperUser, nick } = data;
-
-    if (type === "USER_TEXT")
-      sql = `INSERT INTO chat(member_no, room_no, chat, sended, to_user) VALUES (:memberNo, :roomNo, :chat, now(), :toUser)`;
-    if (type === "SEND_WHISPER")
-      sql = `INSERT INTO chat(member_no, room_no, chat, sended, type, whisper_user, whisper_member_no) 
-      VALUES (:memberNo, :roomNo, :chat, now(), :type, :whisperUser,
-      (SELECT member_no FROM chat.member WHERE member.nick = :whisperUser))`;
-
-    _db.qry(sql, data).then(() => {
-      if (type === "USER_TEXT") io.in(roomNo).emit("/rooms/message", { data });
-      if (type === "SEND_WHISPER")
-        io.to(nick).to(whisperUser).in(roomNo).emit("send whisperUser", data);
-    });
-  });
-
-  //앨범 전송
-  socket.on("send imgFile", (data) => {
-    console.log("imgFile", data);
-    const { roomNo } = data;
-    const uploader = new siofu();
-    uploader.dir = "/path/to/save/uploads";
-
-    console.log("img", uploader);
-    // const sql = ``;
-
-    // _db.qry(sql, data).then(() => {
-    io.in(roomNo).emit("send imgFile", data);
-    //});
-  });
-
-  // 타이핑
-  socket.on("/rooms/typing", (data) => {
-    socket.broadcast.in(data.roomNo).emit("/rooms/typing", data);
-  });
-
-  //채팅방 나가기
-  socket.on("/rooms/out", (data) => {
-    const { roomNo, memberNo } = data;
-
-    if (memberNo !== undefined) {
-      socket.leave(roomNo, memberNo);
-      io.in(roomNo).emit("/rooms/out", data);
-
-      //userList에서 나간 유저 삭제
-      userList = userList.filter((user) => user !== memberNo);
-
-      //userList client로 보냄
-      socket.broadcast.in(roomNo).emit("out user notice", data);
-      io.in(roomNo).emit("/rooms/out", data);
-      console.log("삭제멤버 데이터", userList);
-
-      _db
-        .qry(
-          `DELETE FROM room_users WHERE room_no = :roomNo AND member_no = :memberNo`,
-          data
-        )
-        .then(() => {});
-    }
-  });
-
-  socket.on("disconnect", () => {
-    console.log("연결끊김", socket.id);
-  });
-
-  socket.on("connect_error", (err) => {
-    console.log("connection err", err);
-    socket.disconnect();
-  });
-});
-//-- 채팅 끝
-
-app.use(
-  rateLimit({
-    windowMs: 1 * 60 * 1000, // 1분
-    max: 1000,
-    statusCode: 500,
-    message: "요청이 너무 많습니다.",
-    handler: function (req, res, next, options) {
-      console.log("요청제한: ", req.ip);
-    },
-  })
-);
+io.on("connection", sockets.onConnection(io));
 
 app.use(function (error, req, res, next) {
   if (error instanceof SyntaxError) {
